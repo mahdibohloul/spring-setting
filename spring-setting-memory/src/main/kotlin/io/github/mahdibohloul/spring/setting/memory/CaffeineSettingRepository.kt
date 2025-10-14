@@ -59,20 +59,20 @@ class CaffeineSettingRepository(
   AutoCloseable,
   DisposableBean {
   override fun <T : Setting> findByName(
-    key: String,
+    name: String,
     type: KClass<T>,
-  ): Mono<T> = cache.getIfPresent(key)?.let { future ->
+  ): Mono<T> = cache.getIfPresent(name)?.let { future ->
     Mono.fromFuture(future)
       .map { value -> type.cast(value) }
-  } ?: Mono.error(NoSuchElementException("Setting with key $key not found"))
+  } ?: Mono.error(NoSuchElementException("Setting with key $name not found"))
 
   override fun <T : Setting> deleteByName(
-    key: String,
+    name: String,
     type: KClass<T>,
-  ): Mono<Void> = Mono.fromRunnable { cache.synchronous().invalidate(key) }
+  ): Mono<Void> = Mono.fromRunnable { cache.synchronous().invalidate(name) }
 
-  override fun <T : Setting> save(key: String, setting: T): Mono<Void> = Mono.fromCallable {
-    cache.put(key, Mono.justOrEmpty(setting).toFuture())
+  override fun <T : Setting> save(name: String, setting: T): Mono<Void> = Mono.fromCallable {
+    cache.put(name, Mono.justOrEmpty(setting).toFuture())
   }.then()
 
   override fun destroy() {

@@ -57,17 +57,17 @@ class RedisSettingRepository(
   private val settingProperties: RedisSettingProperties,
 ) : SettingRepository {
 
-  override fun <T : Setting> findByName(key: String, type: KClass<T>): Mono<T> = redisTemplate.opsForValue()
-    .get(prepareKey(key))
-    .switchIfEmpty(Mono.error(NoSuchElementException("Setting with key $key not found")))
+  override fun <T : Setting> findByName(name: String, type: KClass<T>): Mono<T> = redisTemplate.opsForValue()
+    .get(prepareKey(name))
+    .switchIfEmpty(Mono.error(NoSuchElementException("Setting with key $name not found")))
     .map { settingReader.readSetting(input = it, settingClass = type.java) }
 
-  override fun <T : Setting> deleteByName(key: String, type: KClass<T>): Mono<Void> = redisTemplate.opsForValue()
-    .delete(prepareKey(key))
+  override fun <T : Setting> deleteByName(name: String, type: KClass<T>): Mono<Void> = redisTemplate.opsForValue()
+    .delete(prepareKey(name))
     .then()
 
-  override fun <T : Setting> save(key: String, setting: T): Mono<Void> = redisTemplate.opsForValue()
-    .set(prepareKey(key), settingWriter.writeSetting(setting), settingProperties.ttl)
+  override fun <T : Setting> save(name: String, setting: T): Mono<Void> = redisTemplate.opsForValue()
+    .set(prepareKey(name), settingWriter.writeSetting(setting), settingProperties.ttl)
     .then()
 
   private fun prepareKey(name: String): String = "${settingProperties.prefix}$name"

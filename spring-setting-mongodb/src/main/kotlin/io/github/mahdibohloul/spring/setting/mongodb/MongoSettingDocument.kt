@@ -12,7 +12,7 @@ import java.time.Instant
 @TypeAlias("#{@environment.getProperty('spring.setting.mongodb.type-alias', 'MongoSettingDocument')}")
 data class MongoSettingDocument(
   @Id val id: String? = null,
-  @Indexed(unique = true) val key: String,
+  @Indexed(unique = true) val name: String,
   val metadata: String,
   @CreatedDate val createdAt: Instant? = null,
   @LastModifiedDate val updatedAt: Instant? = null,

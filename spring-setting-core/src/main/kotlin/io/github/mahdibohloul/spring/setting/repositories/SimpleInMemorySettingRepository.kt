@@ -33,18 +33,18 @@ class SimpleInMemorySettingRepository :
   AutoCloseable {
   private val store: ConcurrentMap<String, Setting> = ConcurrentHashMap()
 
-  override fun <T : Setting> findByName(key: String, type: KClass<T>): Mono<T> = Mono.fromCallable { store[key] }
-    .switchIfEmpty(Mono.error(NoSuchElementException("Setting with key $key not found")))
+  override fun <T : Setting> findByName(name: String, type: KClass<T>): Mono<T> = Mono.fromCallable { store[name] }
+    .switchIfEmpty(Mono.error(NoSuchElementException("Setting with key $name not found")))
     .filter { type.isInstance(it) }
-    .switchIfEmpty(Mono.error(ClassCastException("Setting with key $key is not of type ${type.simpleName}")))
+    .switchIfEmpty(Mono.error(ClassCastException("Setting with key $name is not of type ${type.simpleName}")))
     .cast(type.java)
 
-  override fun <T : Setting> deleteByName(key: String, type: KClass<T>): Mono<Void> = Mono.fromRunnable<T?> {
-    store.remove(key)
+  override fun <T : Setting> deleteByName(name: String, type: KClass<T>): Mono<Void> = Mono.fromRunnable<T?> {
+    store.remove(name)
   }.then()
 
-  override fun <T : Setting> save(key: String, setting: T): Mono<Void> = Mono.fromCallable {
-    store[key] = setting
+  override fun <T : Setting> save(name: String, setting: T): Mono<Void> = Mono.fromCallable {
+    store[name] = setting
   }.then()
 
   override fun close() {

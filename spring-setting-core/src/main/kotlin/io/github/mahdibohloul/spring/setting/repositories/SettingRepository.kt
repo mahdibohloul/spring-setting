@@ -68,13 +68,13 @@ interface SettingRepository {
    * If the setting exists but cannot be deserialized to the requested type,
    * a `ClassCastException` is returned.
    *
-   * @param key The unique identifier for the setting
+   * @param name The unique identifier for the setting
    * @param type The Kotlin class representing the type of setting to retrieve
    * @return A `Mono` containing the setting if found, or an error if not found or type mismatch
    * @throws NoSuchElementException if no setting with the given key exists
    * @throws ClassCastException if the setting exists but cannot be cast to the requested type
    */
-  fun <T : Setting> findByName(key: String, type: KClass<T>): Mono<T>
+  fun <T : Setting> findByName(name: String, type: KClass<T>): Mono<T>
 
   /**
    * Deletes a setting by its name and type.
@@ -84,12 +84,12 @@ interface SettingRepository {
    * However, if a setting exists but cannot be cast to the requested type,
    * a `ClassCastException` may be returned.
    *
-   * @param key The unique identifier for the setting to delete
+   * @param name The unique identifier for the setting to delete
    * @param type The Kotlin class representing the type of setting to delete
    * @return A `Mono` indicating completion of the delete operation
    * @throws ClassCastException if the setting exists but cannot be cast to the requested type
    */
-  fun <T : Setting> deleteByName(key: String, type: KClass<T>): Mono<Void>
+  fun <T : Setting> deleteByName(name: String, type: KClass<T>): Mono<Void>
 
   /**
    * Saves or updates a setting with the given name.
@@ -98,10 +98,9 @@ interface SettingRepository {
    * already exists, it will be updated. The setting is serialized before storage.
    * If serialization fails, a `JsonProcessingException` will be wrapped in the returned error.
    *
-   * @param key The unique identifier for the setting
+   * @param name The unique identifier for the setting
    * @param setting The setting object to save
    * @return A `Mono` indicating completion of the save operation
-   * @throws JsonProcessingException if the setting cannot be serialized
    */
-  fun <T : Setting> save(key: String, setting: T): Mono<Void>
+  fun <T : Setting> save(name: String, setting: T): Mono<Void>
 }

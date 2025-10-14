@@ -35,30 +35,30 @@ class CompositeSettingRepository(
   }
 
   override fun <T : Setting> findByName(
-    key: String,
+    name: String,
     type: KClass<T>,
   ): Mono<T> = repositories.fold(
-    Mono.error<T>(NoSuchElementException("Setting with key $key not found")),
+    Mono.error<T>(NoSuchElementException("Setting with key $name not found")),
   ) { mono, repository ->
     mono.onErrorResume { _ ->
-      repository.findByName(key, type)
+      repository.findByName(name, type)
         .flatMap { setting ->
           // "Acquire then save" pattern: save it to all previous repositories for cache warming
-          saveToPreviousRepositories(key, setting, repositories.takeWhile { it != repository })
+          saveToPreviousRepositories(name, setting, repositories.takeWhile { it != repository })
             .thenReturn(setting)
         }
     }
   }
 
-  override fun <T : Setting> deleteByName(key: String, type: KClass<T>): Mono<Void> = Mono.`when`(
+  override fun <T : Setting> deleteByName(name: String, type: KClass<T>): Mono<Void> = Mono.`when`(
     repositories.map { repository ->
-      repository.deleteByName(key, type)
+      repository.deleteByName(name, type)
     },
   )
 
-  override fun <T : Setting> save(key: String, setting: T): Mono<Void> = Mono.`when`(
+  override fun <T : Setting> save(name: String, setting: T): Mono<Void> = Mono.`when`(
     repositories.map { repository ->
-      repository.save(key, setting)
+      repository.save(name, setting)
     },
   )
 
