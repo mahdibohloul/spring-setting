@@ -1,0 +1,63 @@
+[versions]
+kotlin = "1.9.23"
+springBoot = "3.5.6"
+spring = "6.1.5"
+reactor = "3.7.11"
+jackson = "2.17.2"
+caffeine = "3.1.8"
+aspectj = "1.9.21"
+slf4j = "2.0.12"
+utilities = "0.9.3"
+reactorKotlin = "1.2.4"
+mockito = "5.2.1"
+junit = "5.10.1"
+spotless = "7.2.1"
+detekt = "1.23.6"
+mavenPublish = "0.34.0"
+dependencyManagement = "1.1.7"
+
+[libraries]
+# Spring Framework
+spring-context = { group = "org.springframework", name = "spring-context", version.ref = "spring" }
+spring-aop = { group = "org.springframework", name = "spring-aop", version.ref = "spring" }
+spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure", version.ref = "springBoot" }
+spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springBoot" }
+
+# MongoDB
+spring-boot-starter-data-mongodb-reactive = { group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb-reactive", version.ref = "springBoot" }
+
+# Redis
+spring-boot-starter-data-redis-reactive = { group = "org.springframework.boot", name = "spring-boot-starter-data-redis-reactive", version.ref = "springBoot" }
+
+# Reactor
+reactor-core = { group = "io.projectreactor", name = "reactor-core", version.ref = "reactor" }
+reactor-test = { group = "io.projectreactor", name = "reactor-test", version.ref = "reactor" }
+reactor-kotlin-extensions = { group = "io.projectreactor.kotlin", name = "reactor-kotlin-extensions", version.ref = "reactorKotlin" }
+
+# Jackson
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+
+# Caffeine
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
+
+# AspectJ
+aspectjweaver = { group = "org.aspectj", name = "aspectjweaver", version.ref = "aspectj" }
+
+# Logging
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+
+# Utilities
+utilities-starter = { group = "box.tapsi.libs", name = "utilities-starter", version.ref = "utilities" }
+
+# Testing
+kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5", version.ref = "kotlin" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "dependencyManagement" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

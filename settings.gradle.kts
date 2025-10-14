@@ -5,5 +5,4 @@ include(
   "spring-setting-mongodb",
   "spring-setting-redis",
   "spring-setting-memory",
-  "spring-setting-demo"
 )
