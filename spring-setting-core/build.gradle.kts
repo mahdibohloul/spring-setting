@@ -17,7 +17,7 @@ java {
 }
 
 dependencies {
-  implementation("org.springframework:spring-context:6.2.7")
+  implementation("org.springframework:spring-context:6.2.10")
   implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.6")
   implementation("io.projectreactor:reactor-core:3.7.11")
   implementation("org.springframework:spring-aop:6.1.5")
