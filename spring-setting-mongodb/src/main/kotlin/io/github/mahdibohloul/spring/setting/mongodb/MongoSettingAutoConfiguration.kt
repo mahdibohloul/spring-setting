@@ -5,7 +5,6 @@ import io.github.mahdibohloul.spring.setting.reader.SettingReader
 import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
 import io.github.mahdibohloul.spring.setting.writer.SettingWriter
 import org.springframework.boot.autoconfigure.AutoConfiguration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -16,9 +15,7 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 @ConditionalOnClass(ReactiveMongoTemplate::class)
 @EnableConfigurationProperties(MongoSettingProperties::class)
 class MongoSettingAutoConfiguration {
-
   @Bean("mongoSettingRepository")
-  @ConditionalOnBean(ReactiveMongoTemplate::class, SettingReader::class, SettingWriter::class)
   fun mongoSettingRepository(
     mongoTemplate: ReactiveMongoTemplate,
     settingWriter: SettingWriter,
