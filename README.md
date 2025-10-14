@@ -1,8 +1,9 @@
 # Spring Setting
 
-[![Build Status](https://github.com/mahdibohloul/spring-setting/workflows/CI/badge.svg)](https://github.com/mahdibohloul/spring-setting/actions)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.mahdibohloul/spring-setting-core.svg)](https://search.maven.org/artifact/io.github.mahdibohloul/spring-setting-core)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.9.23-blue.svg)](https://kotlinlang.org)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mahdibohloul/spring-setting)](https://search.maven.org/artifact/io.github.mahdibohloul/spring-setting)
 
 A Spring Boot library for managing application settings with multi-level storage support. Inspired by the Spring Data
 pattern, it provides a unified interface for accessing settings from memory, Redis, and MongoDB with automatic fallback
