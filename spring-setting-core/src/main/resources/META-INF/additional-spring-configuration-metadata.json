@@ -1,0 +1,11 @@
+{
+  "properties": [
+    {
+      "name": "spring.setting.create-default-instance",
+      "type": "java.lang.Boolean",
+      "description": "Whether to create a default setting instance when there is no existing instance.",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}

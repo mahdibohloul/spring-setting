@@ -1,0 +1,20 @@
+{
+  "groups": [
+    {
+      "name": "spring.setting",
+      "type": "io.github.mahdibohloul.spring.setting.SettingProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.SettingProperties",
+      "description": "Configuration properties for Spring Setting framework."
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.setting.create-default-instance",
+      "type": "java.lang.Boolean",
+      "sourceType": "io.github.mahdibohloul.spring.setting.SettingProperties",
+      "description": "Whether to create a default setting instance when there is no existing instance.",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}
