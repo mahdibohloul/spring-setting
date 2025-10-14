@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.redis
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.autoconfigure.SettingAutoConfiguration
 import io.github.mahdibohloul.spring.setting.reader.SettingReader
 import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
@@ -22,7 +21,6 @@ class RedisSettingAutoConfiguration {
   @ConditionalOnBean(ReactiveRedisTemplate::class, SettingReader::class, SettingWriter::class)
   fun redisSettingRepository(
     redisTemplate: ReactiveRedisTemplate<String, String>,
-    objectMapper: ObjectMapper,
     settingProperties: RedisSettingProperties,
     settingReader: SettingReader,
     settingWriter: SettingWriter,
