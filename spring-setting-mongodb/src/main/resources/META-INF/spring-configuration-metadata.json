@@ -1,0 +1,60 @@
+{
+  "groups": [
+    {
+      "name": "spring.setting.mongodb",
+      "type": "io.github.mahdibohloul.spring.setting.mongodb.MongoSettingProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.mongodb.MongoSettingProperties",
+      "description": "Configuration properties for Spring Setting MongoDB module using reactive MongoDB operations."
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.setting.mongodb.collection-name",
+      "type": "java.lang.String",
+      "description": "Name of the MongoDB collection to store settings. Defaults to 'settings'.",
+      "defaultValue": "settings"
+    },
+    {
+      "name": "spring.setting.mongodb.type-alias",
+      "type": "java.lang.String",
+      "description": "Type alias for MongoDB documents. Defaults to 'SettingEntity'.",
+      "defaultValue": "SettingEntity"
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.setting.mongodb.collection-name",
+      "values": [
+        {
+          "value": "settings",
+          "description": "Default collection name for settings"
+        },
+        {
+          "value": "app_settings",
+          "description": "Application-specific settings collection"
+        },
+        {
+          "value": "configuration",
+          "description": "Configuration-specific collection"
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.mongodb.type-alias",
+      "values": [
+        {
+          "value": "SettingEntity",
+          "description": "Default type alias for setting documents"
+        },
+        {
+          "value": "AppSetting",
+          "description": "Application-specific type alias"
+        },
+        {
+          "value": "ConfigEntity",
+          "description": "Configuration-specific type alias"
+        }
+      ]
+    }
+  ]
+}
