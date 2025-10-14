@@ -30,6 +30,6 @@ class RedisSettingAutoConfiguration {
     redisTemplate,
     settingWriter,
     settingReader,
-    settingProperties
+    settingProperties,
   )
 }

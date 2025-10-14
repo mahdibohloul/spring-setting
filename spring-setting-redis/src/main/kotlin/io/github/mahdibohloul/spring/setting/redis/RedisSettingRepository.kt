@@ -4,9 +4,9 @@ import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.reader.SettingReader
 import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
 import io.github.mahdibohloul.spring.setting.writer.SettingWriter
-import kotlin.reflect.KClass
 import org.springframework.data.redis.core.ReactiveRedisTemplate
 import reactor.core.publisher.Mono
+import kotlin.reflect.KClass
 
 /**
  * A repository implementation for managing settings in Redis.
@@ -57,12 +57,10 @@ class RedisSettingRepository(
   private val settingProperties: RedisSettingProperties,
 ) : SettingRepository {
 
-  override fun <T : Setting> findByName(key: String, type: KClass<T>): Mono<T> =
-    redisTemplate.opsForValue()
-      .get(prepareKey(key))
-      .switchIfEmpty(Mono.error(NoSuchElementException("Setting with key $key not found")))
-      .map { settingReader.readSetting(input = it, settingClass = type.java) }
-
+  override fun <T : Setting> findByName(key: String, type: KClass<T>): Mono<T> = redisTemplate.opsForValue()
+    .get(prepareKey(key))
+    .switchIfEmpty(Mono.error(NoSuchElementException("Setting with key $key not found")))
+    .map { settingReader.readSetting(input = it, settingClass = type.java) }
 
   override fun <T : Setting> deleteByName(key: String, type: KClass<T>): Mono<Void> = redisTemplate.opsForValue()
     .delete(prepareKey(key))
