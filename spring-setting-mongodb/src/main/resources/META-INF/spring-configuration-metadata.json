@@ -13,12 +13,6 @@
       "type": "java.lang.String",
       "description": "Name of the MongoDB collection to store settings. Defaults to 'settings'.",
       "defaultValue": "settings"
-    },
-    {
-      "name": "spring.setting.mongodb.type-alias",
-      "type": "java.lang.String",
-      "description": "Type alias for MongoDB documents. Defaults to 'SettingEntity'.",
-      "defaultValue": "SettingEntity"
     }
   ],
   "hints": [
@@ -36,23 +30,6 @@
         {
           "value": "configuration",
           "description": "Configuration-specific collection"
-        }
-      ]
-    },
-    {
-      "name": "spring.setting.mongodb.type-alias",
-      "values": [
-        {
-          "value": "SettingEntity",
-          "description": "Default type alias for setting documents"
-        },
-        {
-          "value": "AppSetting",
-          "description": "Application-specific type alias"
-        },
-        {
-          "value": "ConfigEntity",
-          "description": "Configuration-specific type alias"
         }
       ]
     }
