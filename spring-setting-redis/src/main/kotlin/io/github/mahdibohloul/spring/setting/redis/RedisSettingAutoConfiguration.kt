@@ -1,0 +1,35 @@
+package io.github.mahdibohloul.spring.setting.redis
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.mahdibohloul.spring.setting.autoconfigure.SettingAutoConfiguration
+import io.github.mahdibohloul.spring.setting.reader.SettingReader
+import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
+import io.github.mahdibohloul.spring.setting.writer.SettingWriter
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Bean
+import org.springframework.data.redis.core.ReactiveRedisTemplate
+
+@AutoConfiguration(after = [SettingAutoConfiguration::class, RedisReactiveAutoConfiguration::class])
+@ConditionalOnClass(ReactiveRedisTemplate::class)
+@EnableConfigurationProperties(RedisSettingProperties::class)
+class RedisSettingAutoConfiguration {
+
+  @Bean("redisSettingRepository")
+  @ConditionalOnBean(ReactiveRedisTemplate::class, SettingReader::class, SettingWriter::class)
+  fun redisSettingRepository(
+    redisTemplate: ReactiveRedisTemplate<String, String>,
+    objectMapper: ObjectMapper,
+    settingProperties: RedisSettingProperties,
+    settingReader: SettingReader,
+    settingWriter: SettingWriter,
+  ): SettingRepository = RedisSettingRepository(
+    redisTemplate,
+    settingWriter,
+    settingReader,
+    settingProperties
+  )
+}
