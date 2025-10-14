@@ -1,0 +1,64 @@
+{
+  "groups": [
+    {
+      "name": "spring.setting.redis",
+      "type": "io.github.mahdibohloul.spring.setting.redis.RedisSettingProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.redis.RedisSettingProperties",
+      "description": "Configuration properties for Spring Setting Redis module using reactive Redis operations."
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.setting.redis.prefix",
+      "type": "java.lang.String",
+      "description": "Prefix for all setting keys stored in Redis. Defaults to 'setting:'.",
+      "defaultValue": "setting:"
+    },
+    {
+      "name": "spring.setting.redis.ttl",
+      "type": "java.time.Duration",
+      "description": "Time-to-live duration for Redis keys. Defaults to 5 minutes.",
+      "defaultValue": "PT5M"
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.setting.redis.prefix",
+      "values": [
+        {
+          "value": "setting:",
+          "description": "Default prefix for setting keys"
+        },
+        {
+          "value": "app:setting:",
+          "description": "Application-specific prefix"
+        },
+        {
+          "value": "config:",
+          "description": "Configuration-specific prefix"
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.redis.ttl",
+      "values": [
+        {
+          "value": "PT1M",
+          "description": "1 minute - short TTL for frequently changing data"
+        },
+        {
+          "value": "PT5M",
+          "description": "5 minutes - default TTL"
+        },
+        {
+          "value": "PT1H",
+          "description": "1 hour - longer TTL for stable data"
+        },
+        {
+          "value": "PT24H",
+          "description": "24 hours - long TTL for rarely changing data"
+        }
+      ]
+    }
+  ]
+}

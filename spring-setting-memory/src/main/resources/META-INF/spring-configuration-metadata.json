@@ -1,0 +1,64 @@
+{
+  "groups": [
+    {
+      "name": "spring.setting.memory",
+      "type": "io.github.mahdibohloul.spring.setting.memory.MemorySettingProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.memory.MemorySettingProperties",
+      "description": "Configuration properties for Spring Setting Memory module using Caffeine cache."
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.setting.memory.maximum-size",
+      "type": "java.lang.Long",
+      "description": "Maximum number of entries that can be cached. Defaults to 10,000.",
+      "defaultValue": 10000
+    },
+    {
+      "name": "spring.setting.memory.expire-after-write",
+      "type": "java.time.Duration",
+      "description": "Duration after which entries expire after being written to the cache. Defaults to 1 minute.",
+      "defaultValue": "PT1M"
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.setting.memory.maximum-size",
+      "values": [
+        {
+          "value": 1000,
+          "description": "Small cache for development/testing"
+        },
+        {
+          "value": 10000,
+          "description": "Default cache size for most applications"
+        },
+        {
+          "value": 100000,
+          "description": "Large cache for high-traffic applications"
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.memory.expire-after-write",
+      "values": [
+        {
+          "value": "PT30S",
+          "description": "30 seconds - very short cache for frequently changing data"
+        },
+        {
+          "value": "PT1M",
+          "description": "1 minute - default for most use cases"
+        },
+        {
+          "value": "PT5M",
+          "description": "5 minutes - longer cache for stable data"
+        },
+        {
+          "value": "PT1H",
+          "description": "1 hour - long cache for rarely changing data"
+        }
+      ]
+    }
+  ]
+}
