@@ -2,6 +2,7 @@ package io.github.mahdibohloul.spring.setting.autoconfigure
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.SettingProperties
+import io.github.mahdibohloul.spring.setting.aop.InjectSettingAspect
 import io.github.mahdibohloul.spring.setting.reader.SettingReader
 import io.github.mahdibohloul.spring.setting.reader.SettingReaderImpl
 import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
@@ -15,9 +16,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 
 @AutoConfiguration
 @EnableConfigurationProperties(SettingProperties::class)
+@Import(InjectSettingAspect::class)
 class SettingAutoConfiguration {
   @ConditionalOnMissingBean(SettingWriter::class)
   @ConditionalOnBean(ObjectMapper::class)

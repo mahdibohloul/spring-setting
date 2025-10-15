@@ -16,7 +16,6 @@ import org.slf4j.Logger
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.core.annotation.Order
-import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.lang.reflect.Method
@@ -51,7 +50,6 @@ import kotlin.reflect.KClass
  * a warning is logged, and the method proceeds without injection.
  */
 @Aspect
-@Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 class InjectSettingAspect(
   private val logger: Logger,

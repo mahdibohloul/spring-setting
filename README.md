@@ -25,12 +25,12 @@ capabilities.
 ```kotlin
 dependencies {
   // Core library (required)
-  implementation("io.github.mahdibohloul:spring-setting-core:0.9.0")
+  implementation("io.github.mahdibohloul:spring-setting-core:0.9.1")
 
   // Choose your storage backends
-  implementation("io.github.mahdibohloul:spring-setting-memory:0.9.0")
-  implementation("io.github.mahdibohloul:spring-setting-redis:0.9.0")
-  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.9.0")
+  implementation("io.github.mahdibohloul:spring-setting-memory:0.9.1")
+  implementation("io.github.mahdibohloul:spring-setting-redis:0.9.1")
+  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.9.1")
 }
 ```
 
