@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.validation.Validator
 
 @AutoConfiguration
 @EnableConfigurationProperties(SettingProperties::class)
@@ -42,5 +43,6 @@ class SettingAutoConfiguration {
   fun settingService(
     settingRepository: SettingRepository,
     settingProperties: SettingProperties,
-  ): SettingService = SettingServiceImpl(settingRepository, settingProperties)
+    validator: Validator?,
+  ): SettingService = SettingServiceImpl(settingRepository, settingProperties, validator)
 }

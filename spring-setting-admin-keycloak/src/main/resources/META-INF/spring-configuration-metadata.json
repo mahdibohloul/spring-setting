@@ -1,0 +1,34 @@
+{
+  "groups": [
+    {
+      "name": "spring.setting.admin.keycloak",
+      "type": "io.github.mahdibohloul.spring.setting.admin.keycloak.SettingAdminKeycloakProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.keycloak.SettingAdminKeycloakProperties",
+      "description": "Configuration for the Keycloak-flavoured JWT auth on the admin REST surface."
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.setting.admin.keycloak.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.keycloak.SettingAdminKeycloakProperties",
+      "description": "Strict opt-in flag. Adding the dependency does not activate Keycloak auth until this is true.",
+      "defaultValue": false
+    },
+    {
+      "name": "spring.setting.admin.keycloak.issuer-uri",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.keycloak.SettingAdminKeycloakProperties",
+      "description": "Keycloak realm URL. The JWKS endpoint is derived as {issuerUri}/protocol/openid-connect/certs. Must be set when enabled=true.",
+      "defaultValue": ""
+    },
+    {
+      "name": "spring.setting.admin.keycloak.authority-prefix",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.keycloak.SettingAdminKeycloakProperties",
+      "description": "Optional prefix prepended to authority names extracted from the JWT realm_access.roles claim. Leave empty to use plain role names that match the ACL config 1:1 (recommended). Set to 'ROLE_' for the legacy Spring Security convention.",
+      "defaultValue": ""
+    }
+  ],
+  "hints": []
+}

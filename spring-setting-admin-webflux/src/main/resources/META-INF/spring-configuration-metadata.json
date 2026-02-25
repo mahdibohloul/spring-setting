@@ -1,0 +1,246 @@
+{
+  "groups": [
+    {
+      "name": "spring.setting.admin.web",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties",
+      "description": "Wire-level configuration for the admin REST surface."
+    },
+    {
+      "name": "spring.setting.admin.web.cors",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties",
+      "description": "CORS settings for the admin paths, independent of the host application's CORS."
+    },
+    {
+      "name": "spring.setting.admin.acl",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties",
+      "description": "Per-operation role mapping for the admin REST surface."
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties",
+      "description": "Per-operation fallback roles applied when a profile omits an operation. Empty set denies access."
+    },
+    {
+      "name": "spring.setting.admin.acl.global",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$GlobalRoles",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties",
+      "description": "Roles for operations not bound to a single setting type."
+    },
+    {
+      "name": "spring.setting.admin.web.auth",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties",
+      "description": "Selects how the admin REST endpoints authenticate callers."
+    },
+    {
+      "name": "spring.setting.admin.web.auth.basic",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Basic",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties",
+      "description": "HTTP Basic credentials for BASIC auth mode. Never enable in production."
+    },
+    {
+      "name": "spring.setting.admin.web.auth.noop",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Noop",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties",
+      "description": "NOOP auth mode configuration. A synthetic Authentication is injected carrying the configured roles."
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.setting.admin.web.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties",
+      "description": "Strict opt-in flag. Adding the dependency does not expose endpoints until this is true.",
+      "defaultValue": false
+    },
+    {
+      "name": "spring.setting.admin.web.base-path",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties",
+      "description": "URL prefix for all admin endpoints. Override to fit an existing URL space.",
+      "defaultValue": "/spring-setting/admin"
+    },
+    {
+      "name": "spring.setting.admin.web.cors.allowed-origins",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "description": "Origins allowed to make cross-origin requests to the admin endpoints.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.web.cors.allowed-methods",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "description": "HTTP methods allowed in CORS preflight responses.",
+      "defaultValue": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    },
+    {
+      "name": "spring.setting.admin.web.cors.allowed-headers",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "description": "Request headers that are allowed in CORS requests.",
+      "defaultValue": ["Authorization", "Content-Type"]
+    },
+    {
+      "name": "spring.setting.admin.web.cors.exposed-headers",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "description": "Response headers that browsers are allowed to access.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.web.cors.allow-credentials",
+      "type": "java.lang.Boolean",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "description": "Whether the browser should include credentials (cookies, authorization headers) in CORS requests.",
+      "defaultValue": false
+    },
+    {
+      "name": "spring.setting.admin.web.cors.max-age",
+      "type": "java.time.Duration",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties$Cors",
+      "description": "How long the result of a preflight request can be cached by the browser.",
+      "defaultValue": "PT1H"
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults.read",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "description": "Roles allowed to read a setting when no profile-specific rule exists. Empty set denies access.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults.patch",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "description": "Roles allowed to patch a setting when no profile-specific rule exists. Empty set denies access.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults.replace",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "description": "Roles allowed to replace a setting when no profile-specific rule exists. Empty set denies access.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults.delete",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "description": "Roles allowed to delete a setting when no profile-specific rule exists. Empty set denies access.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.acl.global.list",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$GlobalRoles",
+      "description": "Roles allowed to list all setting types.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.acl.profiles",
+      "type": "java.util.Map<java.lang.String,io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties",
+      "description": "Per-profile role overrides keyed by setting type simple name (the ACL profile). Overrides defaults for the operations specified."
+    },
+    {
+      "name": "spring.setting.admin.web.auth.mode",
+      "type": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Mode",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties",
+      "description": "Authentication mode for the admin endpoints: KEYCLOAK (OAuth2 JWT), BASIC (HTTP Basic), or NOOP (no auth, dev only).",
+      "defaultValue": "keycloak"
+    },
+    {
+      "name": "spring.setting.admin.web.auth.basic.username",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Basic",
+      "description": "Username for HTTP Basic authentication in BASIC mode.",
+      "defaultValue": "admin"
+    },
+    {
+      "name": "spring.setting.admin.web.auth.basic.password",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Basic",
+      "description": "Password for HTTP Basic authentication in BASIC mode.",
+      "defaultValue": "admin"
+    },
+    {
+      "name": "spring.setting.admin.web.auth.basic.roles",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Basic",
+      "description": "Roles granted to the hardcoded Basic auth user.",
+      "defaultValue": ["ops-tribe", "ops-manager", "tech-manager"]
+    },
+    {
+      "name": "spring.setting.admin.web.auth.noop.roles",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Noop",
+      "description": "Roles attached to the synthetic Authentication inserted by the NOOP filter.",
+      "defaultValue": ["ops-tribe", "ops-manager", "tech-manager"]
+    },
+    {
+      "name": "spring.setting.admin.web.auth.noop.synthetic-principal",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.security.SettingAdminAuthProperties$Noop",
+      "description": "Principal name set on the synthetic Authentication in NOOP mode.",
+      "defaultValue": "dev-noop"
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.setting.admin.web.auth.mode",
+      "values": [
+        {
+          "value": "keycloak",
+          "description": "OAuth2 JWT bearer auth via a ReactiveJwtDecoder. Requires spring-setting-admin-keycloak on the classpath."
+        },
+        {
+          "value": "basic",
+          "description": "HTTP Basic with a hardcoded user. For local dev and QA only — never use in production."
+        },
+        {
+          "value": "noop",
+          "description": "No authentication. A synthetic Authentication carrying configured roles is injected. Intended for tests and local dev."
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.admin.web.base-path",
+      "values": [
+        {
+          "value": "/spring-setting/admin",
+          "description": "Default admin endpoint prefix"
+        },
+        {
+          "value": "/actuator/settings",
+          "description": "Actuator-style prefix"
+        },
+        {
+          "value": "/admin/settings",
+          "description": "Conventional admin prefix"
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.admin.web.cors.max-age",
+      "values": [
+        {
+          "value": "PT10M",
+          "description": "10 minutes - short preflight cache"
+        },
+        {
+          "value": "PT1H",
+          "description": "1 hour - default preflight cache"
+        },
+        {
+          "value": "PT24H",
+          "description": "24 hours - long preflight cache"
+        }
+      ]
+    }
+  ]
+}

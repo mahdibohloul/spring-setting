@@ -8,7 +8,7 @@ plugins {
   `java-library`
 }
 
-description = "spring-setting-core"
+description = "spring-setting-admin-keycloak"
 
 java {
   toolchain {
@@ -17,19 +17,20 @@ java {
 }
 
 dependencies {
-  api("io.projectreactor:reactor-core:3.7.11")
+  api(project(":spring-setting-admin-webflux"))
+
+  compileOnly("org.springframework.boot:spring-boot-starter-webflux:3.5.6")
+  compileOnly("org.springframework.security:spring-security-oauth2-resource-server:6.5.0")
+  compileOnly("org.springframework.security:spring-security-oauth2-jose:6.5.0")
 
   implementation("org.springframework:spring-context:6.2.10")
   implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.6")
-  implementation("org.springframework:spring-aop:6.1.5")
-  implementation("org.aspectj:aspectjweaver:1.9.21")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
-  implementation("box.tapsi.libs:utilities-starter:0.9.3")
-  implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.2.4")
+  implementation("io.projectreactor:reactor-core:3.7.11")
 
   compileOnly("org.slf4j:slf4j-api:2.0.12")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
+  testImplementation("org.springframework.security:spring-security-test:6.5.0")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.23")
   testImplementation("io.projectreactor:reactor-test:3.7.11")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
@@ -52,8 +53,11 @@ mavenPublishing {
   signAllPublications()
 
   pom {
-    name.set("spring-setting-core")
-    description.set("Core Spring Setting library with repository interfaces and composite pattern.")
+    name.set("spring-setting-admin-keycloak")
+    description.set(
+      "Keycloak adapter for spring-setting-admin-webflux: provides a ReactiveJwtDecoder against " +
+        "a configurable Keycloak realm plus a JWT-claim-to-GrantedAuthority converter that reads realm_access.roles.",
+    )
     url.set("https://github.com/mahdibohloul/spring-setting")
     licenses {
       license {
@@ -99,4 +103,3 @@ detekt {
   config.setFrom("$rootDir/detekt.yml")
   baseline = file("$rootDir/detekt-baseline.xml")
 }
-

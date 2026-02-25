@@ -7,7 +7,8 @@
 
 A Spring Boot library for managing application settings with multi-level storage support. Inspired by the Spring Data
 pattern, it provides a unified interface for accessing settings from memory, Redis, and MongoDB with automatic fallback
-capabilities.
+capabilities. An optional admin layer exposes a secure REST API for reading and mutating settings at runtime without
+redeployment.
 
 ## Features
 
@@ -17,6 +18,9 @@ capabilities.
 - 🎯 **Composite Pattern**: Chain multiple repositories for hierarchical storage
 - 📦 **Modular Design**: Use only the storage backends you need
 - 🛡️ **Type Safety**: Kotlin-first with full type safety
+- ✅ **Bean Validation**: Optional Jakarta Bean Validation support for settings
+- 🔑 **Admin REST API**: Optional HTTP layer for managing settings at runtime
+- 🔐 **Pluggable Auth**: Keycloak JWT, HTTP Basic, or NOOP auth for the admin surface
 
 ## Quick Start
 
@@ -25,14 +29,31 @@ capabilities.
 ```kotlin
 dependencies {
   // Core library (required)
-  implementation("io.github.mahdibohloul:spring-setting-core:0.9.1")
+  implementation("io.github.mahdibohloul:spring-setting-core:0.11.1")
 
   // Choose your storage backends
-  implementation("io.github.mahdibohloul:spring-setting-memory:0.9.1")
-  implementation("io.github.mahdibohloul:spring-setting-redis:0.9.1")
-  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.9.1")
+  implementation("io.github.mahdibohloul:spring-setting-memory:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-redis:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.11.1")
+
+  // Optional: headless admin facade (list / read / patch / replace / delete)
+  implementation("io.github.mahdibohloul:spring-setting-admin:0.11.1")
+
+  // Optional: expose the admin facade over HTTP (requires spring-boot-starter-webflux)
+  implementation("io.github.mahdibohloul:spring-setting-admin-webflux:0.11.1")
+
+  // Optional: back the HTTP admin layer with Keycloak JWT auth
+  implementation("io.github.mahdibohloul:spring-setting-admin-keycloak:0.11.1")
+
+  // Optional: enable Bean Validation for settings
+  implementation("org.springframework.boot:spring-boot-starter-validation")
 }
 ```
+
+> **Note:** `spring-setting-admin-webflux` and `spring-setting-admin-keycloak` declare WebFlux and Spring Security
+> as `compileOnly` — they will not force those stacks onto applications that do not need them. The consuming
+> application must provide `spring-boot-starter-webflux` and `spring-boot-starter-security` on its own classpath
+> for the admin endpoints to activate.
 
 ### 2. Define Your Settings
 
@@ -51,33 +72,60 @@ data class DatabaseConfig(
 class MyService(
   private val settingService: SettingService,
 ) {
-  fun getDatabaseConfig(): Mono<DatabaseConfig> {
-    return settingService.findByName("database.config", DatabaseConfig::class)
-  }
+  fun getDatabaseConfig(): Mono<DatabaseConfig> =
+    settingService.findByName("database.config", DatabaseConfig::class)
 
-  fun saveDatabaseConfig(config: DatabaseConfig): Mono<Void> {
-    return settingService.save("database.config", config)
-  }
+  fun saveDatabaseConfig(config: DatabaseConfig): Mono<Void> =
+    settingService.save("database.config", config)
 }
 ```
+
+### 4. Validation (Optional)
+
+When `spring-boot-starter-validation` is on the classpath the library automatically validates settings using
+Jakarta Bean Validation. Validation runs **before save** (to reject invalid data) and **on load** (to fail fast on
+corrupted or legacy data).
+
+```kotlin
+data class PaymentSetting(
+  @DecimalMax(value = "1000000", message = "Amount must be less than or equal to 1,000,000")
+  val maxAmount: BigDecimal,
+
+  @Future(message = "Expiry date must be in the future")
+  val expiryDate: LocalDate,
+) : Setting
+```
+
+If no `Validator` bean is present validation is silently skipped.
+
+---
 
 ## Architecture
 
 ### Multi-level Storage
 
-The library implements a hierarchical storage pattern:
-
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Memory Cache  │───▶│      Redis      │───▶│     MongoDB     │
 │   (Caffeine)    │    │   (Fast Cache)  │    │  (Persistent)   │
-│   Fastest       │    │   Persistent    │    │   Reliable      │
+│   Fastest       │    │   Distributed   │    │   Reliable      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-1. **Memory (Caffeine)**: Ultra-fast access with configurable TTL
-2. **Redis**: Fast, persistent cache with network access
-3. **MongoDB**: Reliable, persistent storage for long-term data
+### Admin Layer
+
+```
+Consumer Application
+        │
+        ▼
+spring-setting-admin          ← headless facade: list / read / patch / replace / delete
+        │
+        ▼
+spring-setting-admin-webflux  ← HTTP endpoints + Spring Security + per-type ACL
+        │
+        ▼
+spring-setting-admin-keycloak ← optional: Keycloak JWT decoder + realm-role converter
+```
 
 ### Repository Pattern
 
@@ -89,49 +137,32 @@ interface SettingRepository {
 }
 ```
 
+---
+
 ## Modules
 
-### Core Module (`spring-setting-core`)
+### Core (`spring-setting-core`)
 
-Provides the base interfaces and composite pattern implementation.
+Provides the base interfaces, composite pattern implementation, and optional Bean Validation integration.
+`reactor-core` is an `api` dependency — consuming modules receive Reactor types on their compile classpath
+without redeclaring it. `slf4j-api` is `compileOnly`; logging is provided by whatever SLF4J binding the host
+application supplies.
 
-**Dependencies:**
-
-- Spring Context
-- Spring Boot Auto-configuration
-- Project Reactor
-- Jackson for serialization
-
-### Memory Module (`spring-setting-memory`)
+### Memory (`spring-setting-memory`)
 
 Caffeine-based in-memory cache with configurable TTL.
 
-**Features:**
-
-- AsyncCache for reactive programming
-- Configurable maximum size and TTL
-- Automatic eviction policies
-
-**Configuration:**
-
 ```yaml
-spring-setting:
-  memory:
-    maximum-size: 1000
-    expire-after-write: PT1H
+spring:
+  setting:
+    memory:
+      maximum-size: 10000       # default
+      expire-after-write: PT1M  # default
 ```
 
-### Redis Module (`spring-setting-redis`)
+### Redis (`spring-setting-redis`)
 
 Reactive Redis implementation for distributed caching.
-
-**Features:**
-
-- Reactive Redis operations
-- JSON serialization
-- Network-accessible storage
-
-**Configuration:**
 
 ```yaml
 spring:
@@ -139,20 +170,11 @@ spring:
     redis:
       host: localhost
       port: 6379
-      database: 0
 ```
 
-### MongoDB Module (`spring-setting-mongodb`)
+### MongoDB (`spring-setting-mongodb`)
 
 Reactive MongoDB implementation for persistent storage.
-
-**Features:**
-
-- Reactive MongoDB operations
-- Document-based storage
-- Full-text search capabilities
-
-**Configuration:**
 
 ```yaml
 spring:
@@ -161,87 +183,230 @@ spring:
       uri: mongodb://localhost:27017/myapp
 ```
 
-## Configuration
+---
 
-### Auto-configuration
+### Admin (`spring-setting-admin`)
 
-The library automatically configures individual repository implementations based on available dependencies. The
-auto-configuration follows a specific order to ensure proper dependency resolution:
+Transport-agnostic façade for managing settings at runtime: list types, read current values, patch with
+JSON Merge Patch (RFC 7396), replace, and delete — with no HTTP or security assumptions.
 
-#### Auto-configuration Order
+**Key SPIs:**
 
-1. **Core Auto-configuration** (`SettingAutoConfiguration`)
-    - Provides basic `SettingRepository` fallback (`SimpleInMemorySettingRepository`)
-    - Configures `SettingService`, `SettingReader`, `SettingWriter`
-    - Runs first to establish the foundation
+- `SettingTypeDescriptor` — register one bean per `Setting` type to opt it into the admin API.
+- `SettingAdminService` — headless service returning JSON strings.
+- `SettingAdminAuthorizer` — replace the allow-all default with your own auth-context-aware implementation.
 
-2. **Module Auto-configurations** (run after core)
-    - **Memory** (`MemorySettingAutoConfiguration`) - runs after core
-    - **Redis** (`RedisSettingAutoConfiguration`) - runs after core + Redis auto-configuration
-    - **MongoDB** (`MongoSettingAutoConfiguration`) - runs after core + MongoDB auto-configuration
-
-#### Configuration Flow
-
-```
-Spring Boot Auto-configurations
-    ↓
-SettingAutoConfiguration (core)
-    ↓
-MemorySettingAutoConfiguration (if Caffeine available)
-RedisSettingAutoConfiguration (if Redis available)  
-MongoSettingAutoConfiguration (if MongoDB available)
-    ↓
-User's Composite Configuration (explicit)
-```
-
-#### Auto-configuration Import Files
-
-Each module includes a `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` file that
-lists the auto-configuration classes:
-
-- **spring-setting-core**: `SettingAutoConfiguration`
-- **spring-setting-memory**: `MemorySettingAutoConfiguration`
-- **spring-setting-redis**: `RedisSettingAutoConfiguration`
-- **spring-setting-mongodb**: `MongoSettingAutoConfiguration`
-
-These files follow
-the [Spring Boot auto-configuration specification](https://docs.spring.io/spring-boot/reference/features/developing-auto-configuration.html)
-and ensure that auto-configurations are properly discovered by Spring Boot.
-
-**Why this ordering matters:**
-
-- **Core first**: Establishes the basic `SettingRepository` fallback
-- **Modules after core**: Can override the core's fallback with specific implementations
-- **Dependencies respected**: Each module waits for its required Spring Boot auto-configurations
-- **No conflicts**: Proper ordering prevents bean definition conflicts
+**Usage:**
 
 ```kotlin
-@SpringBootApplication
-class MyApplication {
-  // Auto-configuration will detect available storage backends
-  // and create individual repository beans (memory, redis, mongodb)
-  // Composite repository configuration is left to the user
+// Describe your setting (recommended: same package as the Setting class).
+@Component
+class DelaySignalPolicySettingDescriptor : SettingTypeDescriptor<DelaySignalPolicySetting> {
+  override val settingClass = DelaySignalPolicySetting::class
+  override fun default() = DelaySignalPolicySetting()
 }
 ```
 
-### Manual Configuration
+Setting persistence keys are derived via `SettingHelper.getSettingName(...)`, so values written through the
+admin API are immediately visible to `SettingService.loadSetting(...)` and `@InjectSetting` consumers.
 
-The library provides auto-configuration for individual repository implementations, but **composite repository
-configuration is left to the user** for full control and transparency.
+---
+
+### Admin WebFlux (`spring-setting-admin-webflux`)
+
+Spring WebFlux REST + Spring Security layer on top of `spring-setting-admin`. Only activates in reactive
+(`WebApplicationType.REACTIVE`) applications and only when `spring.setting.admin.web.enabled=true` is set.
+Both WebFlux and Spring Security must be provided by the consuming application.
+
+**Endpoints** (base path configurable via `spring.setting.admin.web.base-path`, default `/spring-setting/admin`):
+
+| Method   | Path                          | Operation                              |
+|----------|-------------------------------|----------------------------------------|
+| `GET`    | `{basePath}/settings`         | List all registered type names         |
+| `GET`    | `{basePath}/settings/{type}`  | Read current value (or default)        |
+| `PATCH`  | `{basePath}/settings/{type}`  | RFC 7396 JSON Merge Patch              |
+| `PUT`    | `{basePath}/settings/{type}`  | Full replace                           |
+| `DELETE` | `{basePath}/settings/{type}`  | Reset to default                       |
+| `GET`    | `{basePath}/features`         | Feature catalogue for UI consumers     |
+| `GET`    | `{basePath}/me`               | Current caller's principal and roles   |
+
+**Auth modes** (`spring.setting.admin.web.auth.mode`):
+
+| Mode | Description |
+|---|---|
+| `keycloak` (default) | OAuth2 Resource Server — validates JWT Bearer tokens using a `ReactiveJwtDecoder` bean. Provided by `spring-setting-admin-keycloak` or any custom `ReactiveJwtDecoder` bean. Returns `401` for missing/invalid tokens — **does not redirect to a login page**. |
+| `basic` | HTTP Basic against a hardcoded user. **Non-production only.** |
+| `noop` | No authentication. A synthetic `Authentication` carrying configured roles is injected so the per-type ACL still runs. Intended for integration tests and local dev. |
+
+> **Resource Server vs OAuth2 Client:** The admin layer is an OAuth2 Resource Server. It validates Bearer
+> tokens — it never redirects a browser to a login page. To call the endpoints, obtain an access token from
+> your authorization server first (e.g. via Postman, `curl`, or your SPA's auth flow) and pass it as
+> `Authorization: Bearer <token>`.
+
+**Per-type per-operation ACL:**
+
+```yaml
+spring:
+  setting:
+    admin:
+      acl:
+        global:
+          list: [ops-tribe, ops-manager, tech-manager]
+        defaults:
+          read:    [ops-tribe, ops-manager, tech-manager]
+          patch:   [ops-manager, tech-manager]
+          replace: [ops-manager, tech-manager]
+          delete:  [tech-manager]
+        profiles:
+          # Narrow the default for a specific setting type (key = simple class name).
+          DelayWeeklyEnforcementPolicySetting:
+            patch:  [tech-manager]
+            delete: [tech-manager]
+```
+
+**CORS:**
+
+```yaml
+spring:
+  setting:
+    admin:
+      web:
+        cors:
+          allowed-origins: ["https://admin.example.com"]
+          allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+          allowed-headers: [Authorization, Content-Type]
+          max-age: PT1H
+```
+
+**Feature SPI** — register additional `AdminFeatureDescriptor` beans to expose extra admin operations in a
+dynamic UI without changing the library.
+
+**`UserDetailsServiceAutoConfiguration` warning:** `@EnableWebFluxSecurity` causes Spring Security's shared
+`AuthenticationConfiguration` to register an `ObjectPostProcessor` bean, which Spring Boot's servlet-security
+auto-configuration interprets as a signal to create an in-memory user with a random password. This module
+registers a no-op `UserDetailsService` bean to suppress that warning automatically — no exclusion is needed
+in the consuming application.
+
+---
+
+### Admin Keycloak (`spring-setting-admin-keycloak`)
+
+Wires Keycloak as the JWT issuer for `spring-setting-admin-webflux`. Provides a `NimbusReactiveJwtDecoder`
+pointed at the realm's JWKS endpoint and a `JwtAuthenticationConverter` that extracts roles from
+`realm_access.roles`.
+
+**Configuration:**
+
+```yaml
+spring:
+  setting:
+    admin:
+      keycloak:
+        enabled: true
+        issuer-uri: https://auth.example.com/realms/my-realm  # required — no default
+        authority-prefix: ""   # leave empty to match ACL role names 1:1 (recommended)
+```
+
+`issuer-uri` has no default and must be set explicitly. The JWKS endpoint is derived automatically as
+`{issuerUri}/protocol/openid-connect/certs`.
+
+**Verify your Keycloak configuration** before enabling:
+
+```bash
+# Confirm the realm is reachable and inspect supported grant types / token format.
+curl -s https://auth.example.com/realms/my-realm/.well-known/openid-configuration | jq .
+
+# Confirm the JWKS endpoint returns public keys.
+curl -s https://auth.example.com/realms/my-realm/protocol/openid-connect/certs | jq .
+```
+
+By default Keycloak issues signed JWT access tokens (RS256). If your realm is configured to issue opaque
+(reference) tokens you will need a custom `ReactiveJwtDecoder` backed by token introspection instead.
+
+---
+
+## Configuration Reference
+
+### Core
+
+```yaml
+spring:
+  setting:
+    create-default-instance: true  # create default instance when none exists
+```
+
+### Memory
+
+```yaml
+spring:
+  setting:
+    memory:
+      maximum-size: 10000    # max entries in cache
+      expire-after-write: PT1M  # TTL after write
+```
+
+### Redis
+
+```yaml
+spring:
+  setting:
+    redis:
+      prefix: "setting:"  # key prefix
+      ttl: PT5M           # key TTL
+```
+
+### Admin WebFlux — full example
+
+```yaml
+spring:
+  setting:
+    admin:
+      web:
+        enabled: true
+        base-path: /spring-setting/admin
+        auth:
+          mode: keycloak          # keycloak | basic | noop
+          basic:                  # used only when mode=basic
+            username: admin
+            password: admin
+            roles: [ops-tribe, ops-manager, tech-manager]
+          noop:                   # used only when mode=noop
+            roles: [ops-tribe, ops-manager, tech-manager]
+            synthetic-principal: dev-noop
+        cors:
+          allowed-origins: []
+          allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+          allowed-headers: [Authorization, Content-Type]
+          exposed-headers: []
+          allow-credentials: false
+          max-age: PT1H
+      acl:
+        global:
+          list: []
+        defaults:
+          read:    []
+          patch:   []
+          replace: []
+          delete:  []
+        profiles: {}
+      keycloak:
+        enabled: false
+        issuer-uri: ""
+        authority-prefix: ""
+```
+
+---
+
+## Composite Repository Configuration
+
+The library auto-configures individual repository beans but leaves the composite wiring to the consuming
+application for full transparency and control.
 
 ```kotlin
 @Configuration
 class SettingConfiguration {
 
-  /**
-   * Explicitly configure the composite repository with your desired order.
-   * This gives you full control over the repository chain and makes the behavior transparent.
-   *
-   * Repository order (left to right):
-   * 1. Memory (Caffeine) - Fastest access, in-memory cache
-   * 2. Redis - Fast, persistent cache with network access
-   * 3. MongoDB - Persistent, reliable storage
-   */
+  // Three-tier: Memory → Redis → MongoDB
   @Bean
   @Primary
   fun compositeSettingRepository(
@@ -254,63 +419,17 @@ class SettingConfiguration {
 }
 ```
 
-**Why explicit configuration?**
-
-- **No Magic**: You know exactly what repositories are being used and in what order
-- **Full Control**: You can customize the repository chain for your specific needs
-- **Transparency**: The behavior is explicit and predictable
-- **Flexibility**: Easy to add/remove repositories or change the order
-
-### Configuration Examples
+Other common combinations:
 
 ```kotlin
-@Configuration
-class SettingConfiguration {
+// Memory + MongoDB (no Redis)
+CompositeSettingRepository(listOf(memoryRepo, mongoRepo))
 
-  // Example 1: Memory + Redis (Fast cache with persistence)
-  @Bean("memoryRedisComposite")
-  fun memoryRedisComposite(
-    memoryRepo: SettingRepository,
-    redisRepo: SettingRepository,
-  ): SettingRepository = CompositeSettingRepository(
-    listOf(memoryRepo, redisRepo)
-  )
-
-  // Example 2: Memory + MongoDB (Fast cache with reliable storage)
-  @Bean("memoryMongoComposite")
-  fun memoryMongoComposite(
-    memoryRepo: SettingRepository,
-    mongoRepo: SettingRepository,
-  ): SettingRepository = CompositeSettingRepository(
-    listOf(memoryRepo, mongoRepo)
-  )
-
-  // Example 3: Full three-tier setup (Memory + Redis + MongoDB)
-  @Bean
-  @Primary
-  fun fullComposite(
-    memoryRepo: SettingRepository,
-    redisRepo: SettingRepository,
-    mongoRepo: SettingRepository,
-  ): SettingRepository = CompositeSettingRepository(
-    listOf(memoryRepo, redisRepo, mongoRepo)
-  )
-}
+// Memory only (dev / tests)
+CompositeSettingRepository(listOf(memoryRepo))
 ```
 
-## Demo Application
-
-Run the demo application to see the multi-level storage in action:
-
-```bash
-./gradlew :spring-setting-demo:bootRun
-```
-
-The demo showcases:
-
-- Setting storage across all levels
-- Automatic fallback behavior
-- Performance characteristics
+---
 
 ## Building from Source
 
@@ -324,13 +443,12 @@ cd spring-setting
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+3. Make your changes with tests
+4. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
