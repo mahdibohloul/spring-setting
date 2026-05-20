@@ -30,6 +30,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
+import org.springframework.core.annotation.Order
 import org.springframework.security.web.server.SecurityWebFilterChain
 
 /**
@@ -118,8 +119,23 @@ class SettingAdminWebAutoConfiguration {
     webProperties: SettingAdminWebProperties,
   ): AdminFeatureDescriptor = SettingsAdminFeature(typeRegistry, acl, webProperties)
 
+  /**
+   * Must run before Spring Boot's [org.springframework.boot.autoconfigure.web.reactive.error.DefaultErrorWebExceptionHandler]
+   * which is registered at `@Order(-1)`. Without a lower number our JSON error bodies would be
+   * swallowed by the default error page handler before they ever reach the client.
+   */
   @Bean
+  @Order(EXCEPTION_HANDLER_ORDER)
   fun settingAdminWebExceptionHandler(
     objectMapper: ObjectMapper,
   ): SettingAdminWebExceptionHandler = SettingAdminWebExceptionHandler(objectMapper)
+
+  companion object {
+    /**
+     * Order of the exception handler bean.
+     * Must be lower than Spring Boot's `DefaultErrorWebExceptionHandler` which sits at `-1`,
+     * so our JSON error bodies are written before the default error page handler runs.
+     */
+    const val EXCEPTION_HANDLER_ORDER = -2
+  }
 }

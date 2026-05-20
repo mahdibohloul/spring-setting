@@ -19,8 +19,9 @@ java {
 dependencies {
   api(project(":spring-setting-admin"))
 
-  compileOnly("org.springframework.boot:spring-boot-starter-webflux:3.5.6")
-  compileOnly("org.springframework.boot:spring-boot-starter-security:3.5.6")
+  api("org.springframework.boot:spring-boot-starter-webflux:3.5.6")
+  api("org.springframework.boot:spring-boot-starter-security:3.5.6")
+  // oauth2 types appear in public API of KeycloakJwtConfiguration; compileOnly would break consumers
   compileOnly("org.springframework.security:spring-security-oauth2-resource-server:6.5.0")
   compileOnly("org.springframework.security:spring-security-oauth2-jose:6.5.0")
 
@@ -35,6 +36,8 @@ dependencies {
 
   testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
   testImplementation("org.springframework.security:spring-security-test:6.5.0")
+  // spring-boot-starter-webflux and spring-boot-starter-security are now api deps —
+  // they are visible to test sources automatically; no re-declaration needed.
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.23")
   testImplementation("io.projectreactor:reactor-test:3.7.11")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")

@@ -41,7 +41,17 @@ class KeycloakJwtConfiguration {
   @Bean
   @ConditionalOnMissingBean(ReactiveJwtDecoder::class)
   fun keycloakJwtDecoder(properties: SettingAdminKeycloakProperties): ReactiveJwtDecoder {
-    val jwkSetUri = properties.issuerUri.trimEnd('/') + "/protocol/openid-connect/certs"
+    val issuerUri = properties.issuerUri.trim()
+    check(issuerUri.isNotBlank()) {
+      "spring.setting.admin.keycloak.issuer-uri must not be blank when " +
+        "spring.setting.admin.keycloak.enabled=true. " +
+        "Set it to your Keycloak realm URL, e.g. https://auth.example.com/realms/my-realm"
+    }
+    check(issuerUri.startsWith("http://") || issuerUri.startsWith("https://")) {
+      "spring.setting.admin.keycloak.issuer-uri must be an absolute HTTP(S) URL " +
+        "(starting with 'http://' or 'https://'), got: '$issuerUri'"
+    }
+    val jwkSetUri = issuerUri.trimEnd('/') + "/protocol/openid-connect/certs"
     return NimbusReactiveJwtDecoder
       .withJwkSetUri(jwkSetUri)
       .jwsAlgorithm(SignatureAlgorithm.RS256)
@@ -53,7 +63,7 @@ class KeycloakJwtConfiguration {
   fun keycloakJwtAuthenticationConverter(
     properties: SettingAdminKeycloakProperties,
   ): Converter<Jwt, Mono<AbstractAuthenticationToken>> {
-    val rolesConverter = KeycloakRealmRolesAuthoritiesConverter(properties.authorityPrefix)
+    val rolesConverter = KeycloakRealmRolesAuthoritiesConverter(properties.authorityPrefix, properties.clientId)
     val jwtConverter = JwtAuthenticationConverter()
     jwtConverter.setJwtGrantedAuthoritiesConverter(rolesConverter)
     return ReactiveJwtAuthenticationConverterAdapter(jwtConverter)

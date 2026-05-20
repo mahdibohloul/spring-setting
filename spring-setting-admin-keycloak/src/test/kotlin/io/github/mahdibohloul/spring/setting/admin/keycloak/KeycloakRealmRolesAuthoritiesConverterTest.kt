@@ -79,4 +79,86 @@ class KeycloakRealmRolesAuthoritiesConverterTest {
     // verify
     assertTrue(authorities.isEmpty())
   }
+
+  // ── clientId / resource_access ────────────────────────────────────────────────
+
+  @Test
+  fun `includes client roles from resource_access when clientId is set`() {
+    // given
+    val converter = KeycloakRealmRolesAuthoritiesConverter(clientId = "my-client")
+    val token = jwt(
+      mapOf(
+        "realm_access" to mapOf("roles" to listOf("realm-role")),
+        "resource_access" to mapOf(
+          "my-client" to mapOf("roles" to listOf("client-admin", "client-viewer")),
+        ),
+      ),
+    )
+
+    // when
+    val authorities = converter.convert(token).map { it.authority }.toSet()
+
+    // verify
+    assertEquals(setOf("realm-role", "client-admin", "client-viewer"), authorities)
+  }
+
+  @Test
+  fun `ignores resource_access when clientId is blank`() {
+    // given
+    val converter = KeycloakRealmRolesAuthoritiesConverter()
+    val token = jwt(
+      mapOf(
+        "realm_access" to mapOf("roles" to listOf("realm-role")),
+        "resource_access" to mapOf(
+          "some-client" to mapOf("roles" to listOf("should-not-appear")),
+        ),
+      ),
+    )
+
+    // when
+    val authorities = converter.convert(token).map { it.authority }.toSet()
+
+    // verify
+    assertEquals(setOf("realm-role"), authorities)
+  }
+
+  @Test
+  fun `returns only realm roles when clientId is set but client entry is absent`() {
+    // given
+    val converter = KeycloakRealmRolesAuthoritiesConverter(clientId = "missing-client")
+    val token = jwt(
+      mapOf(
+        "realm_access" to mapOf("roles" to listOf("realm-role")),
+        "resource_access" to mapOf(
+          "other-client" to mapOf("roles" to listOf("other-role")),
+        ),
+      ),
+    )
+
+    // when
+    val authorities = converter.convert(token).map { it.authority }.toSet()
+
+    // verify
+    assertEquals(setOf("realm-role"), authorities)
+  }
+
+  @Test
+  fun `applies prefix to both realm and client roles`() {
+    // given
+    val converter = KeycloakRealmRolesAuthoritiesConverter(authorityPrefix = "ROLE_", clientId = "my-client")
+    val token = jwt(
+      mapOf(
+        "realm_access" to mapOf("roles" to listOf("realm-role")),
+        "resource_access" to mapOf(
+          "my-client" to mapOf("roles" to listOf("client-role")),
+        ),
+      ),
+    )
+
+    // when
+    val authorities = converter.convert(token).map { it.authority }.toSet()
+
+    // verify
+    assertEquals(setOf("ROLE_realm-role", "ROLE_client-role"), authorities)
+  }
 }

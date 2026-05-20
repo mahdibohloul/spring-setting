@@ -30,6 +30,19 @@
           "description": "Legacy Spring Security convention. The role-based authorizer strips this prefix automatically."
         }
       ]
+    },
+    {
+      "name": "spring.setting.admin.keycloak.client-id",
+      "values": [
+        {
+          "value": "",
+          "description": "Not set — only realm_access.roles are extracted (default)."
+        },
+        {
+          "value": "my-service",
+          "description": "Replace with your Keycloak client ID. Roles from resource_access.my-service.roles will be merged with realm roles."
+        }
+      ]
     }
   ]
 }

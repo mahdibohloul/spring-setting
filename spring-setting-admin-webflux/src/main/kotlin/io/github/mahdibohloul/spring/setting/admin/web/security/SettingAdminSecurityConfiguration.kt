@@ -1,11 +1,17 @@
 package io.github.mahdibohloul.spring.setting.admin.web.security
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.core.convert.converter.Converter
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
@@ -13,11 +19,14 @@ import org.springframework.security.core.userdetails.MapReactiveUserDetailsServi
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsConfigurationSource
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
+import org.springframework.web.server.ServerWebExchange
+import reactor.core.publisher.Mono
 
 /**
  * Spring Security WebFlux wiring for the admin REST surface.
@@ -39,7 +48,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebFluxSecurity
 @ConditionalOnProperty(prefix = "spring.setting.admin.web", name = ["enabled"], havingValue = "true")
-class SettingAdminSecurityConfiguration {
+class SettingAdminSecurityConfiguration(private val objectMapper: ObjectMapper) {
 
   @Bean
   @Order(ADMIN_FILTER_CHAIN_ORDER)
@@ -47,21 +56,37 @@ class SettingAdminSecurityConfiguration {
     http: ServerHttpSecurity,
     properties: SettingAdminWebProperties,
     auth: SettingAdminAuthProperties,
+    jwtConverterProvider: ObjectProvider<Converter<Jwt, Mono<AbstractAuthenticationToken>>>,
   ): SecurityWebFilterChain {
     val matcher = PathPatternParserServerWebExchangeMatcher("${properties.basePath}/**")
     val base = http.securityMatcher(matcher)
       .csrf { it.disable() }
       .formLogin { it.disable() }
       .cors { it.configurationSource(corsSource(properties)) }
+      .exceptionHandling { spec ->
+        spec.accessDeniedHandler { exchange, ex ->
+          writeJsonError(exchange, HttpStatus.FORBIDDEN, "forbidden", ex)
+        }
+        spec.authenticationEntryPoint { exchange, ex ->
+          writeJsonError(exchange, HttpStatus.UNAUTHORIZED, "unauthenticated", ex)
+        }
+      }
 
     return when (auth.mode) {
-      SettingAdminAuthProperties.Mode.KEYCLOAK ->
+      SettingAdminAuthProperties.Mode.KEYCLOAK -> {
+        // ReactiveJwtDecoder is auto-picked from context by the jwt() DSL.
+        // The authentication converter is NOT auto-picked — must be wired explicitly;
+        // otherwise the default ReactiveJwtAuthenticationConverter runs and produces
+        // only SCOPE_* authorities from the scope claim, never the Keycloak role authorities.
+        val jwtConverter = jwtConverterProvider.ifAvailable
         base
           .httpBasic { it.disable() }
-          // Uses ReactiveJwtDecoder + JwtAuthenticationConverter beans from spring-setting-admin-keycloak
-          .oauth2ResourceServer { rs -> rs.jwt { } }
+          .oauth2ResourceServer { rs ->
+            rs.jwt { jwt -> jwtConverter?.let { jwt.jwtAuthenticationConverter(it) } }
+          }
           .authorizeExchange { it.anyExchange().authenticated() }
           .build()
+      }
 
       SettingAdminAuthProperties.Mode.BASIC ->
         base
@@ -79,6 +104,21 @@ class SettingAdminSecurityConfiguration {
     }
   }
 
+  private fun writeJsonError(
+    exchange: ServerWebExchange,
+    status: HttpStatus,
+    code: String,
+    ex: Throwable,
+  ): Mono<Void> {
+    val response = exchange.response
+    response.statusCode = status
+    response.headers.contentType = MediaType.APPLICATION_JSON
+    val payload = objectMapper.writeValueAsBytes(
+      mapOf("code" to code, "message" to (ex.message ?: code)),
+    )
+    return response.writeWith(Mono.just(response.bufferFactory().wrap(payload)))
+  }
+
   /**
    * Suppresses Spring Boot's UserDetailsServiceAutoConfiguration warning in reactive (WebFlux)
    * applications. @EnableWebFluxSecurity registers ObjectPostProcessor via the shared
@@ -90,8 +130,7 @@ class SettingAdminSecurityConfiguration {
    */
   @Bean
   @ConditionalOnMissingBean(UserDetailsService::class)
-  fun noopUserDetailsService(): UserDetailsService =
-    UserDetailsService { throw UsernameNotFoundException(it) }
+  fun noopUserDetailsService(): UserDetailsService = UserDetailsService { throw UsernameNotFoundException(it) }
 
   /**
    * Hardcoded in-memory user for [SettingAdminAuthProperties.Mode.BASIC].
