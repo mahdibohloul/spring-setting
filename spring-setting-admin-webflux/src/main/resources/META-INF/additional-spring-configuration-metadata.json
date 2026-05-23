@@ -302,6 +302,36 @@
       ]
     },
     {
+      "name": "spring.setting.admin.acl.defaults.history",
+      "values": [
+        {
+          "value": "ops-tribe",
+          "description": "Operations tribe — broad read access, including audit history."
+        },
+        {
+          "value": "ops-manager",
+          "description": "Operations manager — read, patch, and history access."
+        },
+        {
+          "value": "tech-manager",
+          "description": "Technical manager — full access including audit history."
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults.revert",
+      "values": [
+        {
+          "value": "ops-manager",
+          "description": "Operations manager — can revert settings to a previous value."
+        },
+        {
+          "value": "tech-manager",
+          "description": "Technical manager — full access including revert."
+        }
+      ]
+    },
+    {
       "name": "spring.setting.admin.acl.profiles",
       "values": [],
       "providers": [

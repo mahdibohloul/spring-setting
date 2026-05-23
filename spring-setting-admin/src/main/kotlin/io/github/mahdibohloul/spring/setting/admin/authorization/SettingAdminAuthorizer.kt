@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono
  * + `spring-setting-admin-keycloak` modules).
  */
 interface SettingAdminAuthorizer {
-  enum class Operation { LIST, READ, PATCH, REPLACE, DELETE }
+  enum class Operation { LIST, READ, PATCH, REPLACE, DELETE, HISTORY, REVERT }
 
   /**
    * Decides whether the current caller may perform [operation] on [typeName].

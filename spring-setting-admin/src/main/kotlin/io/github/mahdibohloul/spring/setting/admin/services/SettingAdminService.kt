@@ -1,5 +1,6 @@
 package io.github.mahdibohloul.spring.setting.admin.services
 
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditEntry
 import reactor.core.publisher.Mono
 
 /**
@@ -34,4 +35,21 @@ interface SettingAdminService {
    * reads fall back to the descriptor's default. Completes silently if no value is persisted.
    */
   fun delete(typeName: String): Mono<Void>
+
+  /**
+   * Returns the [limit] most-recent audit entries for [typeName], ordered newest-first.
+   * [limit] is clamped to `[1, 200]`. Requires the `HISTORY` ACL operation to be permitted.
+   *
+   * Returns an empty list when audit is disabled (no-op log) or when no entries exist yet.
+   */
+  fun getHistory(typeName: String, limit: Int): Mono<List<AuditEntry>>
+
+  /**
+   * Restores the setting identified by [typeName] to the `previousValue` recorded in [entryId].
+   * Internally delegates to [replace], so it re-checks `REPLACE` ACL and records its own audit
+   * entry with operation `REPLACE`. The revert operation itself is also ACL-gated by `REVERT`.
+   *
+   * Returns the JSON of the restored value (same shape as [replace]).
+   */
+  fun revert(typeName: String, entryId: String): Mono<String>
 }

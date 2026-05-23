@@ -16,32 +16,40 @@ java {
   }
 }
 
+dependencyManagement {
+  imports {
+    mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
+  }
+}
+
 dependencies {
   api(project(":spring-setting-admin"))
+  // TransactionalOperator is optional — only needed when a ReactiveTransactionManager is on the classpath.
+  compileOnly("org.springframework:spring-tx")
 
-  api("org.springframework.boot:spring-boot-starter-webflux:3.5.6")
-  api("org.springframework.boot:spring-boot-starter-security:3.5.6")
+  api("org.springframework.boot:spring-boot-starter-webflux")
+  api("org.springframework.boot:spring-boot-starter-security")
   // oauth2 types appear in public API of KeycloakJwtConfiguration; compileOnly would break consumers
-  compileOnly("org.springframework.security:spring-security-oauth2-resource-server:6.5.0")
-  compileOnly("org.springframework.security:spring-security-oauth2-jose:6.5.0")
+  compileOnly("org.springframework.security:spring-security-oauth2-resource-server")
+  compileOnly("org.springframework.security:spring-security-oauth2-jose")
 
-  implementation("org.springframework:spring-context:6.2.10")
-  implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.6")
-  implementation("io.projectreactor:reactor-core:3.7.11")
+  implementation("org.springframework:spring-context")
+  implementation("org.springframework.boot:spring-boot-autoconfigure")
+  implementation("io.projectreactor:reactor-core")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.2.4")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.2")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  implementation("com.fasterxml.jackson.core:jackson-databind")
 
-  compileOnly("org.slf4j:slf4j-api:2.0.12")
+  compileOnly("org.slf4j:slf4j-api")
 
-  testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
-  testImplementation("org.springframework.security:spring-security-test:6.5.0")
+  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.springframework.security:spring-security-test")
   // spring-boot-starter-webflux and spring-boot-starter-security are now api deps —
   // they are visible to test sources automatically; no re-declaration needed.
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.23")
-  testImplementation("io.projectreactor:reactor-test:3.7.11")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+  testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
+  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

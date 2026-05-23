@@ -135,6 +135,20 @@
       "defaultValue": []
     },
     {
+      "name": "spring.setting.admin.acl.defaults.history",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "description": "Roles allowed to view the audit history of a setting when no profile-specific rule exists. Only evaluated when spring.setting.audit.enabled=true. Empty set denies access.",
+      "defaultValue": []
+    },
+    {
+      "name": "spring.setting.admin.acl.defaults.revert",
+      "type": "java.util.Set<java.lang.String>",
+      "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$OperationRoles",
+      "description": "Roles allowed to revert a setting to a prior audit-log value when no profile-specific rule exists. Only evaluated when spring.setting.audit.enabled=true. Empty set denies access.",
+      "defaultValue": []
+    },
+    {
       "name": "spring.setting.admin.acl.global.list",
       "type": "java.util.Set<java.lang.String>",
       "sourceType": "io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties$GlobalRoles",

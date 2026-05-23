@@ -16,22 +16,28 @@ java {
   }
 }
 
-dependencies {
-  api("io.projectreactor:reactor-core:3.7.11")
+dependencyManagement {
+  imports {
+    mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
+  }
+}
 
-  implementation("org.springframework:spring-context:6.2.10")
-  implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.6")
-  implementation("org.springframework:spring-aop:6.1.5")
-  implementation("org.aspectj:aspectjweaver:1.9.21")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+dependencies {
+  api("io.projectreactor:reactor-core")
+
+  implementation("org.springframework:spring-context")
+  implementation("org.springframework.boot:spring-boot-autoconfigure")
+  implementation("org.springframework:spring-aop")
+  implementation("org.aspectj:aspectjweaver")
+  implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("box.tapsi.libs:utilities-starter:0.9.3")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.2.4")
 
-  compileOnly("org.slf4j:slf4j-api:2.0.12")
+  compileOnly("org.slf4j:slf4j-api")
 
-  testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.23")
-  testImplementation("io.projectreactor:reactor-test:3.7.11")
+  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+  testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")

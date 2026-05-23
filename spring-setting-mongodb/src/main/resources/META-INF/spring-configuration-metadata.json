@@ -5,6 +5,16 @@
       "type": "io.github.mahdibohloul.spring.setting.mongodb.MongoSettingProperties",
       "sourceType": "io.github.mahdibohloul.spring.setting.mongodb.MongoSettingProperties",
       "description": "Configuration properties for Spring Setting MongoDB module using reactive MongoDB operations."
+    },
+    {
+      "name": "spring.setting.audit",
+      "description": "Audit log feature for the Spring Setting admin API. Requires spring-setting-admin on the classpath and spring.setting.audit.enabled=true to activate."
+    },
+    {
+      "name": "spring.setting.audit.mongodb",
+      "type": "io.github.mahdibohloul.spring.setting.mongodb.MongoAuditProperties",
+      "sourceType": "io.github.mahdibohloul.spring.setting.mongodb.MongoAuditProperties",
+      "description": "MongoDB-specific configuration for the audit log persistence."
     }
   ],
   "properties": [
@@ -13,6 +23,26 @@
       "type": "java.lang.String",
       "description": "Name of the MongoDB collection to store settings. Defaults to 'settings'.",
       "defaultValue": "settings"
+    },
+    {
+      "name": "spring.setting.audit.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables the audit log. When true, every PATCH, PUT, and DELETE is recorded with the previous value, new value, caller identity, and timestamp. History and revert endpoints become available. Requires spring-setting-admin on the classpath.",
+      "defaultValue": false
+    },
+    {
+      "name": "spring.setting.audit.mongodb.collection-name",
+      "type": "java.lang.String",
+      "sourceType": "io.github.mahdibohloul.spring.setting.mongodb.MongoAuditProperties",
+      "description": "Name of the MongoDB collection used to store audit log entries.",
+      "defaultValue": "setting_audit_logs"
+    },
+    {
+      "name": "spring.setting.audit.mongodb.max-entries-per-type",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.mahdibohloul.spring.setting.mongodb.MongoAuditProperties",
+      "description": "Maximum number of audit entries retained per setting type. After each write the oldest entries exceeding this limit are evicted. Set to 0 or a negative value to disable eviction entirely.",
+      "defaultValue": 50
     }
   ],
   "hints": [
@@ -30,6 +60,19 @@
         {
           "value": "configuration",
           "description": "Configuration-specific collection"
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.audit.mongodb.collection-name",
+      "values": [
+        {
+          "value": "setting_audit_logs",
+          "description": "Default collection — one document per audit event."
+        },
+        {
+          "value": "admin_audit_log",
+          "description": "Convention used when multiple services share the same MongoDB instance."
         }
       ]
     }

@@ -46,19 +46,23 @@ class RoleBasedSettingAdminAuthorizer(
       }
   }
 
-  @Suppress("detekt.ReturnCount")
+  @Suppress("detekt.ReturnCount", "detekt.CyclomaticComplexMethod")
   private fun resolveRequiredRoles(operation: Operation, typeName: String?): Set<String> {
+    // LIST is the only type-agnostic operation — it resolves from global roles, not per-type.
     if (operation == Operation.LIST) return acl.global.list
     if (typeName == null) return emptySet()
+
     val profileName = registry.get(typeName).aclProfile
     val profile = acl.profiles[profileName]
-    @Suppress("KotlinConstantConditions")
+
     return when (operation) {
       Operation.READ -> profile?.read?.takeIf { it.isNotEmpty() } ?: acl.defaults.read
       Operation.PATCH -> profile?.patch?.takeIf { it.isNotEmpty() } ?: acl.defaults.patch
       Operation.REPLACE -> profile?.replace?.takeIf { it.isNotEmpty() } ?: acl.defaults.replace
       Operation.DELETE -> profile?.delete?.takeIf { it.isNotEmpty() } ?: acl.defaults.delete
-      Operation.LIST -> emptySet()
+      Operation.HISTORY -> profile?.history?.takeIf { it.isNotEmpty() } ?: acl.defaults.history
+      Operation.REVERT -> profile?.revert?.takeIf { it.isNotEmpty() } ?: acl.defaults.revert
+      Operation.LIST -> acl.global.list // exhaustive; unreachable (handled above)
     }
   }
 }

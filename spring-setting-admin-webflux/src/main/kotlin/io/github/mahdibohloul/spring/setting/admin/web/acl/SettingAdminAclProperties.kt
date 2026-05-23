@@ -40,6 +40,8 @@ data class SettingAdminAclProperties(
     val patch: Set<String> = emptySet(),
     val replace: Set<String> = emptySet(),
     val delete: Set<String> = emptySet(),
+    val history: Set<String> = emptySet(),
+    val revert: Set<String> = emptySet(),
   )
 
   data class GlobalRoles(

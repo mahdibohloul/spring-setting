@@ -16,28 +16,34 @@ java {
   }
 }
 
+dependencyManagement {
+  imports {
+    mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
+  }
+}
+
 dependencies {
   api(project(":spring-setting-admin-webflux"))
 
   // webflux already transitively provided by spring-setting-admin-webflux (api); keep compileOnly
   // to avoid duplicate declarations and potential version skew.
-  compileOnly("org.springframework.boot:spring-boot-starter-webflux:3.5.6")
-  api("org.springframework.security:spring-security-oauth2-resource-server:6.5.0")
-  api("org.springframework.security:spring-security-oauth2-jose:6.5.0")
+  compileOnly("org.springframework.boot:spring-boot-starter-webflux")
+  api("org.springframework.security:spring-security-oauth2-resource-server")
+  api("org.springframework.security:spring-security-oauth2-jose")
 
-  implementation("org.springframework:spring-context:6.2.10")
-  implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.6")
-  implementation("io.projectreactor:reactor-core:3.7.11")
+  implementation("org.springframework:spring-context")
+  implementation("org.springframework.boot:spring-boot-autoconfigure")
+  implementation("io.projectreactor:reactor-core")
 
-  compileOnly("org.slf4j:slf4j-api:2.0.12")
+  compileOnly("org.slf4j:slf4j-api")
 
-  testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
-  testImplementation("org.springframework.security:spring-security-test:6.5.0")
+  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.springframework.security:spring-security-test")
   // spring-security-oauth2-jose/resource-server are now api deps — visible to test sources automatically.
   // spring-boot-starter-webflux is api via spring-setting-admin-webflux transitive — also visible.
-  testImplementation("org.springframework.boot:spring-boot-starter-webflux:3.5.6")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.23")
-  testImplementation("io.projectreactor:reactor-test:3.7.11")
+  testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+  testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")

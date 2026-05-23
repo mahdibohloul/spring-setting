@@ -21,6 +21,7 @@ redeployment.
 - ✅ **Bean Validation**: Optional Jakarta Bean Validation support for settings
 - 🔑 **Admin REST API**: Optional HTTP layer for managing settings at runtime
 - 🔐 **Pluggable Auth**: Keycloak JWT, HTTP Basic, or NOOP auth for the admin surface
+- 📋 **Audit Log**: Optional change history with before/after values, caller identity, and one-click revert
 
 ## Quick Start
 
@@ -118,11 +119,14 @@ If no `Validator` bean is present validation is silently skipped.
 Consumer Application
         │
         ▼
-spring-setting-admin          ← headless facade: list / read / patch / replace / delete
+spring-setting-admin          ← headless facade: list / read / patch / replace / delete / history / revert
+        │                        audit SPI (SettingAuditLog, SettingAuditPrincipalProvider)
+        ▼
+spring-setting-mongodb        ← optional: MongoDB-backed audit log + TransactionalOperator
         │
         ▼
 spring-setting-admin-webflux  ← HTTP endpoints + Spring Security + per-type ACL
-        │
+        │                        history & revert endpoints + reactive principal provider
         ▼
 spring-setting-admin-keycloak ← optional: Keycloak JWT decoder + realm-role converter
 ```
@@ -220,15 +224,20 @@ Both WebFlux and Spring Security must be provided by the consuming application.
 
 **Endpoints** (base path configurable via `spring.setting.admin.web.base-path`, default `/spring-setting/admin`):
 
-| Method   | Path                          | Operation                              |
-|----------|-------------------------------|----------------------------------------|
-| `GET`    | `{basePath}/settings`         | List all registered type names         |
-| `GET`    | `{basePath}/settings/{type}`  | Read current value (or default)        |
-| `PATCH`  | `{basePath}/settings/{type}`  | RFC 7396 JSON Merge Patch              |
-| `PUT`    | `{basePath}/settings/{type}`  | Full replace                           |
-| `DELETE` | `{basePath}/settings/{type}`  | Reset to default                       |
-| `GET`    | `{basePath}/features`         | Feature catalogue for UI consumers     |
-| `GET`    | `{basePath}/me`               | Current caller's principal and roles   |
+| Method   | Path                                       | Operation                                          |
+|----------|--------------------------------------------|----------------------------------------------------|
+| `GET`    | `{basePath}/settings`                      | List all registered type names                     |
+| `GET`    | `{basePath}/settings/{type}`               | Read current value (or default)                    |
+| `PATCH`  | `{basePath}/settings/{type}`               | RFC 7396 JSON Merge Patch                          |
+| `PUT`    | `{basePath}/settings/{type}`               | Full replace                                       |
+| `DELETE` | `{basePath}/settings/{type}`               | Reset to default                                   |
+| `GET`    | `{basePath}/settings/{type}/history`       | Audit history (newest-first, `?limit=20`)          |
+| `POST`   | `{basePath}/settings/{type}/revert/{id}`   | Revert to the `previousValue` of that audit entry  |
+| `GET`    | `{basePath}/features`                      | Feature catalogue for UI consumers                 |
+| `GET`    | `{basePath}/me`                            | Current caller's principal and roles               |
+
+> **Audit endpoints** are only registered when `spring.setting.audit.enabled=true`. Without that flag the
+> routes are entirely absent.
 
 **Auth modes** (`spring.setting.admin.web.auth.mode`):
 
@@ -257,11 +266,14 @@ spring:
           patch:   [ops-manager, tech-manager]
           replace: [ops-manager, tech-manager]
           delete:  [tech-manager]
+          history: [ops-tribe, ops-manager, tech-manager]   # who may view change history
+          revert:  [ops-manager, tech-manager]              # who may revert to a previous value
         profiles:
           # Narrow the default for a specific setting type (key = simple class name).
           DelayWeeklyEnforcementPolicySetting:
             patch:  [tech-manager]
             delete: [tech-manager]
+            revert: [tech-manager]
 ```
 
 **CORS:**
@@ -286,6 +298,78 @@ dynamic UI without changing the library.
 auto-configuration interprets as a signal to create an in-memory user with a random password. This module
 registers a no-op `UserDetailsService` bean to suppress that warning automatically — no exclusion is needed
 in the consuming application.
+
+---
+
+### Audit Log
+
+The audit log is an **opt-in** feature that records every PATCH, PUT, and DELETE operation with:
+
+- the **previous** and **new** JSON value
+- the **caller identity** (resolved from Spring Security context in the WebFlux layer)
+- a **timestamp**
+
+#### Enabling
+
+Add `spring.setting.audit.enabled=true` and include `spring-setting-mongodb` on the classpath to activate
+MongoDB-backed persistence:
+
+```yaml
+spring:
+  setting:
+    audit:
+      enabled: true
+      mongodb:
+        collection-name: setting_audit_logs  # default
+        max-entries-per-type: 50             # default; 0 or negative disables eviction
+```
+
+Without `spring.setting.audit.enabled=true` a `NoopSettingAuditLog` is used and the history/revert
+endpoints are not registered — existing behaviour is completely unchanged.
+
+#### How it works
+
+1. **After** a setting is successfully saved (or deleted), an `AuditEntry` is written with the before
+   and after values.
+2. **Retention** — after each write the oldest entries beyond `max-entries-per-type` are evicted.
+   Eviction failures are logged and swallowed; they never affect the setting save.
+3. **Transactionality** — when `spring-setting-mongodb` detects a `ReactiveMongoTransactionManager`
+   bean (i.e. a MongoDB replica set with transaction management configured), the setting-save and
+   audit-write are wrapped in a single atomic transaction. Both commit or both roll back.
+   Without a transaction manager the audit write is best-effort.
+
+#### Revert
+
+`POST {basePath}/settings/{type}/revert/{entryId}` reads the `previousValue` from the named audit
+entry and calls `replace()` with it. The revert itself is also audited as a REPLACE, giving a full
+chain of custody in the history.
+
+#### Custom audit principal provider
+
+The library ships a `ReactiveSecurityAuditPrincipalProvider` that reads the authenticated username
+from `ReactiveSecurityContextHolder`. To customise how the caller identity is resolved, register
+your own `SettingAuditPrincipalProvider` bean:
+
+```kotlin
+@Bean
+fun myPrincipalProvider(): SettingAuditPrincipalProvider =
+  SettingAuditPrincipalProvider {
+    ReactiveSecurityContextHolder.getContext()
+      .map { ctx -> ctx.authentication?.name ?: "system" }
+  }
+```
+
+#### Custom audit log backend
+
+To store audit entries in a different backend, implement `SettingAuditLog` and register it as a bean:
+
+```kotlin
+@Bean
+fun customAuditLog(): SettingAuditLog = MyCustomAuditLog()
+```
+
+The MongoDB implementation (`MongoSettingAuditLog`) is skipped when a `SettingAuditLog` bean is
+already present (`@ConditionalOnMissingBean`).
 
 ---
 
@@ -355,6 +439,18 @@ spring:
       ttl: PT5M           # key TTL
 ```
 
+### Audit Log
+
+```yaml
+spring:
+  setting:
+    audit:
+      enabled: false                          # opt-in; false by default
+      mongodb:
+        collection-name: setting_audit_logs   # MongoDB collection for audit entries
+        max-entries-per-type: 50              # retention cap per setting type; ≤0 disables eviction
+```
+
 ### Admin WebFlux — full example
 
 ```yaml
@@ -388,6 +484,8 @@ spring:
           patch:   []
           replace: []
           delete:  []
+          history: []
+          revert:  []
         profiles: {}
       keycloak:
         enabled: false
