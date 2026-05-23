@@ -21,6 +21,11 @@ import reactor.core.publisher.Mono
  * `/spring-setting/admin`. The controller deliberately knows nothing about authorization —
  * that is enforced by the service (via `SettingAdminAuthorizer`) and the surrounding
  * Spring Security filter chain.
+ *
+ * Body conventions:
+ * - `PATCH` — `Content-Type: application/merge-patch+json`; body is the JSON Merge Patch
+ *   document (RFC 7396) applied on top of the current value.
+ * - `PUT` — `Content-Type: application/json`; body is the complete replacement JSON value.
  */
 @RestController
 @RequestMapping("\${spring.setting.admin.web.base-path:/spring-setting/admin}/settings")
@@ -33,17 +38,19 @@ class SettingAdminController(
   @GetMapping("/{type}")
   fun get(@PathVariable type: String): Mono<SettingPayload> = service.getAsJson(type).map { SettingPayload(type, it) }
 
-  @PatchMapping("/{type}", consumes = [MediaType.APPLICATION_JSON_VALUE])
+  /** RFC 7396: body IS the JSON Merge Patch document, applied on top of the current value. */
+  @PatchMapping("/{type}", consumes = [APPLICATION_MERGE_PATCH_JSON_VALUE])
   fun patch(
     @PathVariable type: String,
-    @RequestBody body: PatchBody,
-  ): Mono<SettingPayload> = service.patch(type, body.jsonMergePatch).map { SettingPayload(type, it) }
+    @RequestBody patch: String,
+  ): Mono<SettingPayload> = service.patch(type, patch).map { SettingPayload(type, it) }
 
+  /** Body is the complete replacement JSON value. */
   @PutMapping("/{type}", consumes = [MediaType.APPLICATION_JSON_VALUE])
   fun replace(
     @PathVariable type: String,
-    @RequestBody body: ReplaceBody,
-  ): Mono<SettingPayload> = service.replace(type, body.jsonValue).map { SettingPayload(type, it) }
+    @RequestBody jsonValue: String,
+  ): Mono<SettingPayload> = service.replace(type, jsonValue).map { SettingPayload(type, it) }
 
   @DeleteMapping("/{type}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -51,6 +58,9 @@ class SettingAdminController(
 
   data class TypeNamesResponse(val typeNames: List<String>)
   data class SettingPayload(val typeName: String, val jsonValue: String)
-  data class PatchBody(val jsonMergePatch: String)
-  data class ReplaceBody(val jsonValue: String)
+
+  companion object {
+    /** RFC 7396 media type for JSON Merge Patch — the canonical content type for PATCH requests. */
+    const val APPLICATION_MERGE_PATCH_JSON_VALUE = "application/merge-patch+json"
+  }
 }

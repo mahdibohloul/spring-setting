@@ -105,8 +105,8 @@ class SettingAdminControllerTest {
     whenever(service.patch("FooSetting", """{"x":1}""")).thenReturn(Mono.just("""{"x":1}"""))
 
     client.patch().uri("$BASE/FooSetting")
-      .contentType(MediaType.APPLICATION_JSON)
-      .bodyValue("""{"jsonMergePatch":"{\"x\":1}"}""")
+      .contentType(MediaType.valueOf(SettingAdminController.APPLICATION_MERGE_PATCH_JSON_VALUE))
+      .bodyValue("""{"x":1}""")
       .exchange()
       .expectStatus().isOk
       .expectBody()
@@ -121,8 +121,8 @@ class SettingAdminControllerTest {
     )
 
     client.patch().uri("$BASE/Ghost")
-      .contentType(MediaType.APPLICATION_JSON)
-      .bodyValue("""{"jsonMergePatch":"{\"x\":1}"}""")
+      .contentType(MediaType.valueOf(SettingAdminController.APPLICATION_MERGE_PATCH_JSON_VALUE))
+      .bodyValue("""{"x":1}""")
       .exchange()
       .expectStatus().isNotFound
       .expectBody()
@@ -137,7 +137,7 @@ class SettingAdminControllerTest {
 
     client.put().uri("$BASE/FooSetting")
       .contentType(MediaType.APPLICATION_JSON)
-      .bodyValue("""{"jsonValue":"{\"x\":99}"}""")
+      .bodyValue("""{"x":99}""")
       .exchange()
       .expectStatus().isOk
       .expectBody()
@@ -153,7 +153,7 @@ class SettingAdminControllerTest {
 
     client.put().uri("$BASE/Ghost")
       .contentType(MediaType.APPLICATION_JSON)
-      .bodyValue("""{"jsonValue":"{\"x\":1}"}""")
+      .bodyValue("""{"x":1}""")
       .exchange()
       .expectStatus().isNotFound
       .expectBody()
