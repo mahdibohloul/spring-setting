@@ -24,7 +24,7 @@ object JsonMergePatch {
     } else {
       JsonNodeFactory.instance.objectNode()
     }
-    patch.fields().forEach { (key, value) ->
+    patch.properties().forEach { (key, value) ->
       if (value.isNull) {
         result.remove(key)
       } else {

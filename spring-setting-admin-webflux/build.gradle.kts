@@ -16,12 +16,6 @@ java {
   }
 }
 
-dependencyManagement {
-  imports {
-    mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
-  }
-}
-
 dependencies {
   api(project(":spring-setting-admin"))
   // TransactionalOperator is optional — only needed when a ReactiveTransactionManager is on the classpath.

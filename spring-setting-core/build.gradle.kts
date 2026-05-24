@@ -16,12 +16,6 @@ java {
   }
 }
 
-dependencyManagement {
-  imports {
-    mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
-  }
-}
-
 dependencies {
   api("io.projectreactor:reactor-core")
 
