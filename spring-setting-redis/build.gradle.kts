@@ -19,14 +19,14 @@ java {
 dependencies {
   api(project(":spring-setting-core"))
 
-  implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive:3.5.6")
-  implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.6")
-  implementation("io.projectreactor:reactor-core:3.7.11")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+  implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
+  implementation("org.springframework.boot:spring-boot-autoconfigure")
+  implementation("io.projectreactor:reactor-core")
+  implementation("com.fasterxml.jackson.core:jackson-databind")
 
-  testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.23")
-  testImplementation("io.projectreactor:reactor-test:3.7.11")
+  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+  testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")

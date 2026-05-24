@@ -1,0 +1,48 @@
+{
+  "properties": [],
+  "hints": [
+    {
+      "name": "spring.setting.admin.keycloak.issuer-uri",
+      "values": [
+        {
+          "value": "https://auth.example.com/realms/my-realm",
+          "description": "Replace with your Keycloak realm URL. The JWKS endpoint is derived automatically."
+        },
+        {
+          "value": "http://localhost:8180/realms/dev",
+          "description": "Local Keycloak instance — common for development and integration tests."
+        },
+        {
+          "value": "http://localhost:9090/realms/dev",
+          "description": "Testcontainers-managed Keycloak default port in integration tests."
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.admin.keycloak.authority-prefix",
+      "values": [
+        {
+          "value": "",
+          "description": "No prefix — role names from the JWT match the ACL config 1:1 (recommended)."
+        },
+        {
+          "value": "ROLE_",
+          "description": "Legacy Spring Security convention. The role-based authorizer strips this prefix automatically."
+        }
+      ]
+    },
+    {
+      "name": "spring.setting.admin.keycloak.client-id",
+      "values": [
+        {
+          "value": "",
+          "description": "Not set — only realm_access.roles are extracted (default)."
+        },
+        {
+          "value": "my-service",
+          "description": "Replace with your Keycloak client ID. Roles from resource_access.my-service.roles will be merged with realm roles."
+        }
+      ]
+    }
+  ]
+}
