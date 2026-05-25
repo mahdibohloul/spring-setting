@@ -33,7 +33,7 @@ class RoleBasedSettingAdminAuthorizer(
       .mapNotNull { it.authentication }
       .switchIfEmpty(Mono.error(AccessDeniedException("Unauthenticated")))
       .flatMap { authentication ->
-        val granted = authentication.authorities.map { it.authority.removePrefix("ROLE_") }.toSet()
+        val granted = authentication.authorities.map { it.authority?.removePrefix("ROLE_").orEmpty() }.toSet()
         if (granted.intersect(required).isNotEmpty()) {
           Mono.empty()
         } else {

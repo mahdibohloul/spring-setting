@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.web.autoconfigure
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeRegistry
 import io.github.mahdibohloul.spring.setting.admin.audit.NoopSettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditLog
@@ -39,6 +38,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.core.annotation.Order
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.transaction.reactive.TransactionalOperator
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Top-level auto-configuration for `spring-setting-admin-webflux`.

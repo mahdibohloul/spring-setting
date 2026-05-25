@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.web.security
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.admin.UnknownSettingTypeException
 import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.HttpStatus
@@ -11,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.server.WebExceptionHandler
 import reactor.core.publisher.Mono
+import tools.jackson.databind.ObjectMapper
 
 /**
  * JSON error renderer for the admin REST surface.

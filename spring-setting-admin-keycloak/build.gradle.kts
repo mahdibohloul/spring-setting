@@ -1,10 +1,9 @@
 plugins {
-  kotlin("jvm") version "1.9.23"
-  kotlin("plugin.spring") version "1.9.23"
-  id("io.spring.dependency-management") version "1.1.7"
+  kotlin("jvm")
+  kotlin("plugin.spring")
+  id("io.spring.dependency-management")
   id("com.vanniktech.maven.publish") version "0.34.0"
   id("com.diffplug.spotless") version "7.2.1"
-  id("io.gitlab.arturbosch.detekt") version "1.23.6"
   `java-library`
 }
 
@@ -102,9 +101,3 @@ spotless {
   }
 }
 
-detekt {
-  buildUponDefaultConfig = true
-  allRules = true
-  config.setFrom("$rootDir/detekt.yml")
-  baseline = file("$rootDir/detekt-baseline.xml")
-}

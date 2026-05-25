@@ -7,6 +7,7 @@ import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
 import org.springframework.beans.factory.DisposableBean
 import reactor.core.publisher.Mono
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
@@ -72,7 +73,7 @@ class CaffeineSettingRepository(
   ): Mono<Void> = Mono.fromRunnable { cache.synchronous().invalidate(name) }
 
   override fun <T : Setting> save(name: String, setting: T): Mono<Void> = Mono.fromCallable {
-    cache.put(name, Mono.justOrEmpty(setting).toFuture())
+    cache.put(name, CompletableFuture.completedFuture(setting))
   }.then()
 
   override fun destroy() {

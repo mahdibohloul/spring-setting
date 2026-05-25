@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.web.security
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -12,7 +11,6 @@ import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService
@@ -27,6 +25,7 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Spring Security WebFlux wiring for the admin REST surface.
@@ -46,7 +45,6 @@ import reactor.core.publisher.Mono
  * `@Order(100)` chain Spring Boot creates).
  */
 @Configuration
-@EnableWebFluxSecurity
 @ConditionalOnProperty(prefix = "spring.setting.admin.web", name = ["enabled"], havingValue = "true")
 class SettingAdminSecurityConfiguration(private val objectMapper: ObjectMapper) {
 
@@ -121,10 +119,7 @@ class SettingAdminSecurityConfiguration(private val objectMapper: ObjectMapper) 
 
   /**
    * Suppresses Spring Boot's UserDetailsServiceAutoConfiguration warning in reactive (WebFlux)
-   * applications. @EnableWebFluxSecurity registers ObjectPostProcessor via the shared
-   * AuthenticationConfiguration, which satisfies UserDetailsServiceAutoConfiguration's
-   * @ConditionalOnBean condition even without any servlet SecurityAutoConfiguration present.
-   * Registering a no-op UserDetailsService here satisfies the @ConditionalOnMissingBean
+   * applications. Registering a no-op UserDetailsService here satisfies the @ConditionalOnMissingBean
    * guard and prevents the auto-configuration from creating an in-memory user with a
    * logged random password.
    */

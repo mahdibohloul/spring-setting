@@ -1,7 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.web.security
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.github.mahdibohloul.spring.setting.admin.UnknownSettingTypeException
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -11,6 +9,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.server.ResponseStatusException
 import reactor.test.StepVerifier
+import tools.jackson.databind.json.JsonMapper
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -22,7 +21,7 @@ import kotlin.test.assertNotNull
  */
 class SettingAdminWebExceptionHandlerTest {
 
-  private val objectMapper = ObjectMapper().registerKotlinModule()
+  private val objectMapper = JsonMapper()
   private val handler = SettingAdminWebExceptionHandler(objectMapper)
 
   private fun exchange(): MockServerWebExchange = MockServerWebExchange.from(
@@ -88,10 +87,10 @@ class SettingAdminWebExceptionHandlerTest {
   fun `ResponseStatusException proxies its status code`() {
     val exchange = exchange()
     StepVerifier.create(
-      handler.handle(exchange, ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "bad input")),
+      handler.handle(exchange, ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "bad input")),
     ).verifyComplete()
 
-    assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, exchange.response.statusCode)
+    assertEquals(HttpStatus.UNPROCESSABLE_CONTENT, exchange.response.statusCode)
     assertEquals("error", body(exchange)["code"])
   }
 

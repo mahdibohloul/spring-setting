@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.autoconfigure
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.SettingProperties
 import io.github.mahdibohloul.spring.setting.aop.InjectSettingAspect
 import io.github.mahdibohloul.spring.setting.reader.SettingReader
@@ -18,6 +17,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.validation.Validator
+import tools.jackson.databind.ObjectMapper
 
 @AutoConfiguration
 @EnableConfigurationProperties(SettingProperties::class)

@@ -6,12 +6,12 @@ import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
 import io.github.mahdibohloul.spring.setting.writer.SettingWriter
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.mongodb.autoconfigure.MongoReactiveAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 
-@AutoConfiguration(after = [SettingAutoConfiguration::class, MongoAutoConfiguration::class])
+@AutoConfiguration(after = [SettingAutoConfiguration::class, MongoReactiveAutoConfiguration::class])
 @ConditionalOnClass(ReactiveMongoTemplate::class)
 @EnableConfigurationProperties(MongoSettingProperties::class)
 class MongoSettingAutoConfiguration {

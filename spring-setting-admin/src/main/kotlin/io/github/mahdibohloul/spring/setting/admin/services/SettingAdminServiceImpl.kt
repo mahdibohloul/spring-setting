@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.services
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.SettingHelper
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeDescriptor
@@ -18,6 +17,7 @@ import io.github.mahdibohloul.spring.setting.writer.SettingWriter
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.core.publisher.Mono
+import tools.jackson.databind.ObjectMapper
 import java.time.Instant
 import kotlin.reflect.KClass
 
@@ -193,7 +193,7 @@ class SettingAdminServiceImpl(
    * Wraps [this] in the [txOperator] transaction when one is configured.
    * A no-op pass-through when [txOperator] is null.
    */
-  private fun <T> Mono<T>.inTransaction(): Mono<T> = txOperator?.transactional(this) ?: this
+  private fun <T : Any> Mono<T>.inTransaction(): Mono<T> = txOperator?.transactional(this) ?: this
 
   private companion object {
     const val MIN_HISTORY_LIMIT = 1

@@ -9,7 +9,6 @@ import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.slf4j.Logger
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory
 import reactor.core.publisher.Mono
 import reactor.kotlin.test.test
@@ -20,9 +19,6 @@ class InjectSettingAspectTest {
   private lateinit var service: SettingAspectTest.TestService
 
   @Mock
-  private lateinit var logger: Logger
-
-  @Mock
   private lateinit var settingService: SettingService
 
   private lateinit var injectSettingAspect: InjectSettingAspect
@@ -30,7 +26,7 @@ class InjectSettingAspectTest {
   @BeforeEach
   fun init() {
     MockitoAnnotations.openMocks(this)
-    injectSettingAspect = InjectSettingAspect(logger, settingService)
+    injectSettingAspect = InjectSettingAspect(settingService)
     val factory = AspectJProxyFactory(service)
     factory.addAspect(injectSettingAspect)
     service = factory.getProxy()

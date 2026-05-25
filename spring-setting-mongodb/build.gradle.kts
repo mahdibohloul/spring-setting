@@ -1,10 +1,9 @@
 plugins {
-  kotlin("jvm") version "1.9.23"
-  kotlin("plugin.spring") version "1.9.23"
-  id("io.spring.dependency-management") version "1.1.7"
+  kotlin("jvm")
+  kotlin("plugin.spring")
+  id("io.spring.dependency-management")
   id("com.vanniktech.maven.publish") version "0.34.0"
   id("com.diffplug.spotless") version "7.2.1"
-  id("io.gitlab.arturbosch.detekt") version "1.23.6"
   `java-library`
 }
 
@@ -24,7 +23,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
   implementation("org.springframework.boot:spring-boot-autoconfigure")
   implementation("io.projectreactor:reactor-core")
-  implementation("com.fasterxml.jackson.core:jackson-databind")
+  implementation("tools.jackson.core:jackson-databind")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -90,9 +89,3 @@ spotless {
   }
 }
 
-detekt {
-  buildUponDefaultConfig = true
-  allRules = true
-  config.setFrom("$rootDir/detekt.yml")
-  baseline = file("$rootDir/detekt-baseline.xml")
-}

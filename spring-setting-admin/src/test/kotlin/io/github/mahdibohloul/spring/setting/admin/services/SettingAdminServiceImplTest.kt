@@ -1,9 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.services
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.SettingHelper
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeDescriptor
@@ -17,6 +13,8 @@ import io.github.mahdibohloul.spring.setting.writer.SettingWriterImpl
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
 import java.time.Duration
 import kotlin.reflect.KClass
 
@@ -43,11 +41,9 @@ class SettingAdminServiceImplTest {
   ): Pair<SettingAdminServiceImpl, SimpleInMemorySettingRepository> {
     val repo = SimpleInMemorySettingRepository()
     val registry = SettingTypeRegistry(listOf(Descriptor(SampleSetting::class) { SampleSetting() }))
-    val mapper = ObjectMapper()
-      .registerKotlinModule()
-      .registerModule(JavaTimeModule())
-      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-      .disable(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
+    val mapper = JsonMapper.builder()
+      .addModule(KotlinModule.Builder().build())
+      .build()
     val settingReader = SettingReaderImpl(mapper)
     val settingWriter = SettingWriterImpl(mapper)
 

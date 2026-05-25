@@ -12,8 +12,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import reactor.core.publisher.Mono
 
 /**
@@ -64,8 +63,8 @@ class KeycloakJwtConfiguration {
     properties: SettingAdminKeycloakProperties,
   ): Converter<Jwt, Mono<AbstractAuthenticationToken>> {
     val rolesConverter = KeycloakRealmRolesAuthoritiesConverter(properties.authorityPrefix, properties.clientId)
-    val jwtConverter = JwtAuthenticationConverter()
-    jwtConverter.setJwtGrantedAuthoritiesConverter(rolesConverter)
-    return ReactiveJwtAuthenticationConverterAdapter(jwtConverter)
+    return Converter { jwt ->
+      Mono.just(JwtAuthenticationToken(jwt, rolesConverter.convert(jwt)))
+    }
   }
 }

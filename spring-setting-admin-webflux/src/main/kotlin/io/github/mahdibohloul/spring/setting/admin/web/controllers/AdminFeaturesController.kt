@@ -29,7 +29,7 @@ class AdminFeaturesController(
   @GetMapping("/features")
   fun list(): Mono<FeaturesResponse> = ReactiveSecurityContextHolder.getContext()
     .mapNotNull { it.authentication }
-    .map { it.authorities.map { authority -> authority.authority.removePrefix("ROLE_") }.toSet() }
+    .map { it.authorities.map { authority -> authority.authority?.removePrefix("ROLE_").orEmpty() }.toSet() }
     .defaultIfEmpty(emptySet())
     .map { grantedRoles -> FeaturesResponse(registry.visibleTo(grantedRoles).map(::toDto)) }
 
@@ -39,7 +39,7 @@ class AdminFeaturesController(
     .map { authentication ->
       MeResponse(
         principal = authentication.name,
-        roles = authentication.authorities.map { it.authority.removePrefix("ROLE_") }.toSet(),
+        roles = authentication.authorities.map { it.authority?.removePrefix("ROLE_").orEmpty() }.toSet(),
       )
     }
     .defaultIfEmpty(MeResponse(principal = "anonymous", roles = emptySet()))
