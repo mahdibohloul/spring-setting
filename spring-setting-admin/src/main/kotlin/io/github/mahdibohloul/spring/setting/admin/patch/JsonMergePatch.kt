@@ -1,8 +1,8 @@
 package io.github.mahdibohloul.spring.setting.admin.patch
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.databind.node.ObjectNode
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.JsonNodeFactory
+import tools.jackson.databind.node.ObjectNode
 
 /**
  * RFC 7396 (JSON Merge Patch) implementation against Jackson's tree model.
@@ -29,7 +29,7 @@ object JsonMergePatch {
         result.remove(key)
       } else {
         val existing = result.get(key) ?: JsonNodeFactory.instance.objectNode()
-        result.set<JsonNode>(key, merge(existing, value))
+        result.set(key, merge(existing, value))
       }
     }
     return result

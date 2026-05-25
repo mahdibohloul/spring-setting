@@ -1,8 +1,8 @@
 # Spring Setting
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9.23-blue.svg)](https://kotlinlang.org)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.2.21-blue.svg)](https://kotlinlang.org)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.mahdibohloul/spring-setting-core)](https://search.maven.org/artifact/io.github.mahdibohloul/spring-setting-core)
 
 A Spring Boot library for managing application settings with multi-level storage support. Inspired by the Spring Data
@@ -30,21 +30,21 @@ redeployment.
 ```kotlin
 dependencies {
   // Core library (required)
-  implementation("io.github.mahdibohloul:spring-setting-core:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-core:1.0.0")
 
   // Choose your storage backends
-  implementation("io.github.mahdibohloul:spring-setting-memory:0.11.1")
-  implementation("io.github.mahdibohloul:spring-setting-redis:0.11.1")
-  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-memory:1.0.0")
+  implementation("io.github.mahdibohloul:spring-setting-redis:1.0.0")
+  implementation("io.github.mahdibohloul:spring-setting-mongodb:1.0.0")
 
   // Optional: headless admin facade (list / read / patch / replace / delete)
-  implementation("io.github.mahdibohloul:spring-setting-admin:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-admin:1.0.0")
 
   // Optional: expose the admin facade over HTTP (requires spring-boot-starter-webflux)
-  implementation("io.github.mahdibohloul:spring-setting-admin-webflux:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-admin-webflux:1.0.0")
 
   // Optional: back the HTTP admin layer with Keycloak JWT auth
-  implementation("io.github.mahdibohloul:spring-setting-admin-keycloak:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-admin-keycloak:1.0.0")
 
   // Optional: enable Bean Validation for settings
   implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -168,23 +168,42 @@ spring:
 
 Reactive Redis implementation for distributed caching.
 
+Configure the connection via Spring Boot's standard properties, then tune the library's own behaviour:
+
 ```yaml
+# Spring Boot connection config (required)
 spring:
   data:
     redis:
       host: localhost
       port: 6379
+
+# Library-specific properties
+spring:
+  setting:
+    redis:
+      prefix: "setting:"  # key prefix — default: "setting:"
+      ttl: PT5M           # key TTL   — default: PT5M
 ```
 
 ### MongoDB (`spring-setting-mongodb`)
 
 Reactive MongoDB implementation for persistent storage.
 
+Configure the connection via Spring Boot's standard properties, then tune the library's own behaviour:
+
 ```yaml
+# Spring Boot connection config (required)
 spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/myapp
+
+# Library-specific properties
+spring:
+  setting:
+    mongodb:
+      collection-name: settings  # collection used to store settings — default: "settings"
 ```
 
 ---
@@ -224,28 +243,28 @@ Both WebFlux and Spring Security must be provided by the consuming application.
 
 **Endpoints** (base path configurable via `spring.setting.admin.web.base-path`, default `/spring-setting/admin`):
 
-| Method   | Path                                       | Operation                                          |
-|----------|--------------------------------------------|----------------------------------------------------|
-| `GET`    | `{basePath}/settings`                      | List all registered type names                     |
-| `GET`    | `{basePath}/settings/{type}`               | Read current value (or default)                    |
-| `PATCH`  | `{basePath}/settings/{type}`               | RFC 7396 JSON Merge Patch                          |
-| `PUT`    | `{basePath}/settings/{type}`               | Full replace                                       |
-| `DELETE` | `{basePath}/settings/{type}`               | Reset to default                                   |
-| `GET`    | `{basePath}/settings/{type}/history`       | Audit history (newest-first, `?limit=20`)          |
-| `POST`   | `{basePath}/settings/{type}/revert/{id}`   | Revert to the `previousValue` of that audit entry  |
-| `GET`    | `{basePath}/features`                      | Feature catalogue for UI consumers                 |
-| `GET`    | `{basePath}/me`                            | Current caller's principal and roles               |
+| Method   | Path                                     | Operation                                         |
+|----------|------------------------------------------|---------------------------------------------------|
+| `GET`    | `{basePath}/settings`                    | List all registered type names                    |
+| `GET`    | `{basePath}/settings/{type}`             | Read current value (or default)                   |
+| `PATCH`  | `{basePath}/settings/{type}`             | RFC 7396 JSON Merge Patch                         |
+| `PUT`    | `{basePath}/settings/{type}`             | Full replace                                      |
+| `DELETE` | `{basePath}/settings/{type}`             | Reset to default                                  |
+| `GET`    | `{basePath}/settings/{type}/history`     | Audit history (newest-first, `?limit=20`)         |
+| `POST`   | `{basePath}/settings/{type}/revert/{id}` | Revert to the `previousValue` of that audit entry |
+| `GET`    | `{basePath}/features`                    | Feature catalogue for UI consumers                |
+| `GET`    | `{basePath}/me`                          | Current caller's principal and roles              |
 
 > **Audit endpoints** are only registered when `spring.setting.audit.enabled=true`. Without that flag the
 > routes are entirely absent.
 
 **Auth modes** (`spring.setting.admin.web.auth.mode`):
 
-| Mode | Description |
-|---|---|
+| Mode                 | Description                                                                                                                                                                                                                                                    |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `keycloak` (default) | OAuth2 Resource Server — validates JWT Bearer tokens using a `ReactiveJwtDecoder` bean. Provided by `spring-setting-admin-keycloak` or any custom `ReactiveJwtDecoder` bean. Returns `401` for missing/invalid tokens — **does not redirect to a login page**. |
-| `basic` | HTTP Basic against a hardcoded user. **Non-production only.** |
-| `noop` | No authentication. A synthetic `Authentication` carrying configured roles is injected so the per-type ACL still runs. Intended for integration tests and local dev. |
+| `basic`              | HTTP Basic against a hardcoded user. **Non-production only.**                                                                                                                                                                                                  |
+| `noop`               | No authentication. A synthetic `Authentication` carrying configured roles is injected so the per-type ACL still runs. Intended for integration tests and local dev.                                                                                            |
 
 > **Resource Server vs OAuth2 Client:** The admin layer is an OAuth2 Resource Server. It validates Bearer
 > tokens — it never redirects a browser to a login page. To call the endpoints, obtain an access token from
@@ -260,20 +279,20 @@ spring:
     admin:
       acl:
         global:
-          list: [ops-tribe, ops-manager, tech-manager]
+          list: [ ops-tribe, ops-manager, tech-manager ]
         defaults:
-          read:    [ops-tribe, ops-manager, tech-manager]
-          patch:   [ops-manager, tech-manager]
-          replace: [ops-manager, tech-manager]
-          delete:  [tech-manager]
-          history: [ops-tribe, ops-manager, tech-manager]   # who may view change history
-          revert:  [ops-manager, tech-manager]              # who may revert to a previous value
+          read: [ ops-tribe, ops-manager, tech-manager ]
+          patch: [ ops-manager, tech-manager ]
+          replace: [ ops-manager, tech-manager ]
+          delete: [ tech-manager ]
+          history: [ ops-tribe, ops-manager, tech-manager ]   # who may view change history
+          revert: [ ops-manager, tech-manager ]              # who may revert to a previous value
         profiles:
           # Narrow the default for a specific setting type (key = simple class name).
           DelayWeeklyEnforcementPolicySetting:
-            patch:  [tech-manager]
-            delete: [tech-manager]
-            revert: [tech-manager]
+            patch: [ tech-manager ]
+            delete: [ tech-manager ]
+            revert: [ tech-manager ]
 ```
 
 **CORS:**
@@ -284,9 +303,9 @@ spring:
     admin:
       web:
         cors:
-          allowed-origins: ["https://admin.example.com"]
-          allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-          allowed-headers: [Authorization, Content-Type]
+          allowed-origins: [ "https://admin.example.com" ]
+          allowed-methods: [ GET, POST, PUT, PATCH, DELETE, OPTIONS ]
+          allowed-headers: [ Authorization, Content-Type ]
           max-age: PT1H
 ```
 
@@ -376,8 +395,17 @@ already present (`@ConditionalOnMissingBean`).
 ### Admin Keycloak (`spring-setting-admin-keycloak`)
 
 Wires Keycloak as the JWT issuer for `spring-setting-admin-webflux`. Provides a `NimbusReactiveJwtDecoder`
-pointed at the realm's JWKS endpoint and a `JwtAuthenticationConverter` that extracts roles from
-`realm_access.roles`.
+pointed at the realm's JWKS endpoint and a JWT authentication converter that extracts roles from two
+sources in every token and merges them:
+
+| Source       | JWT claim path                      | When used                    |
+|--------------|-------------------------------------|------------------------------|
+| Realm roles  | `realm_access.roles`                | Always                       |
+| Client roles | `resource_access.{client-id}.roles` | Only when `client-id` is set |
+
+Both lists are merged into a single authority collection — no role is lost. If `authority-prefix` is
+empty (the default), authority names match the role names exactly so the ACL config can use the same
+strings without any transformation.
 
 **Configuration:**
 
@@ -389,10 +417,16 @@ spring:
         enabled: true
         issuer-uri: https://auth.example.com/realms/my-realm  # required — no default
         authority-prefix: ""   # leave empty to match ACL role names 1:1 (recommended)
+        client-id: ""          # set to include resource_access.{clientId}.roles alongside realm roles
 ```
 
 `issuer-uri` has no default and must be set explicitly. The JWKS endpoint is derived automatically as
 `{issuerUri}/protocol/openid-connect/certs`.
+
+> **Realm roles vs client roles:** Keycloak lets you assign roles at the realm level (`realm_access`)
+> or scope them to a specific client (`resource_access.<client-id>`). Leave `client-id` empty to read
+> only realm roles. Set it to your client's ID (e.g. `delivery-admin-panel`) when your users carry
+> their meaningful roles as client-scoped roles — both sources are always merged.
 
 **Verify your Keycloak configuration** before enabling:
 
@@ -439,6 +473,15 @@ spring:
       ttl: PT5M           # key TTL
 ```
 
+### MongoDB
+
+```yaml
+spring:
+  setting:
+    mongodb:
+      collection-name: settings  # collection used to store settings
+```
+
 ### Audit Log
 
 ```yaml
@@ -462,35 +505,36 @@ spring:
         base-path: /spring-setting/admin
         auth:
           mode: keycloak          # keycloak | basic | noop
-          basic:                  # used only when mode=basic
+          basic: # used only when mode=basic
             username: admin
             password: admin
-            roles: [ops-tribe, ops-manager, tech-manager]
-          noop:                   # used only when mode=noop
-            roles: [ops-tribe, ops-manager, tech-manager]
+            roles: [ ops-tribe, ops-manager, tech-manager ]
+          noop: # used only when mode=noop
+            roles: [ ops-tribe, ops-manager, tech-manager ]
             synthetic-principal: dev-noop
         cors:
-          allowed-origins: []
-          allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-          allowed-headers: [Authorization, Content-Type]
-          exposed-headers: []
+          allowed-origins: [ ]
+          allowed-methods: [ GET, POST, PUT, PATCH, DELETE, OPTIONS ]
+          allowed-headers: [ Authorization, Content-Type ]
+          exposed-headers: [ ]
           allow-credentials: false
           max-age: PT1H
       acl:
         global:
-          list: []
+          list: [ ]
         defaults:
-          read:    []
-          patch:   []
-          replace: []
-          delete:  []
-          history: []
-          revert:  []
-        profiles: {}
+          read: [ ]
+          patch: [ ]
+          replace: [ ]
+          delete: [ ]
+          history: [ ]
+          revert: [ ]
+        profiles: { }
       keycloak:
         enabled: false
         issuer-uri: ""
         authority-prefix: ""
+        client-id: ""          # set to include resource_access.{clientId}.roles
 ```
 
 ---

@@ -1,18 +1,18 @@
 package io.github.mahdibohloul.spring.setting.aop
 
-import box.tapsi.libs.utilities.isReturningFlux
-import box.tapsi.libs.utilities.isReturningMono
-import box.tapsi.libs.utilities.isReturningPublisher
 import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.SettingHelper
 import io.github.mahdibohloul.spring.setting.annotations.InjectSetting
+import io.github.mahdibohloul.spring.setting.isReturningFlux
+import io.github.mahdibohloul.spring.setting.isReturningMono
+import io.github.mahdibohloul.spring.setting.isReturningPublisher
 import io.github.mahdibohloul.spring.setting.services.SettingService
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
 import org.reactivestreams.Publisher
-import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.core.annotation.Order
@@ -52,9 +52,9 @@ import kotlin.reflect.KClass
 @Aspect
 @Order(Ordered.LOWEST_PRECEDENCE)
 class InjectSettingAspect(
-  private val logger: Logger,
   private val settingService: SettingService,
 ) {
+  private val logger = LoggerFactory.getLogger(this::class.java)
 
   @Around("@within(io.github.mahdibohloul.spring.setting.annotations.InjectSetting)")
   fun injectSettingInClass(joinPoint: ProceedingJoinPoint): Any? {

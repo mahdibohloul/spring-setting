@@ -1,6 +1,5 @@
 package io.github.mahdibohloul.spring.setting.admin.autoconfigure
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeDescriptor
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeRegistry
@@ -23,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.kotlin.core.publisher.toMono
+import tools.jackson.databind.ObjectMapper
 
 @AutoConfiguration(after = [SettingAutoConfiguration::class])
 @ConditionalOnBean(SettingRepository::class)

@@ -1,10 +1,9 @@
 plugins {
-  kotlin("jvm") version "1.9.23"
-  kotlin("plugin.spring") version "1.9.23"
-  id("io.spring.dependency-management") version "1.1.7"
+  kotlin("jvm")
+  kotlin("plugin.spring")
+  id("io.spring.dependency-management")
   id("com.vanniktech.maven.publish") version "0.34.0"
   id("com.diffplug.spotless") version "7.2.1"
-  id("io.gitlab.arturbosch.detekt") version "1.23.6"
   `java-library`
 }
 
@@ -26,7 +25,7 @@ dependencies {
   compileOnly("org.springframework:spring-tx")
   implementation("io.projectreactor:reactor-core")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.2.4")
-  implementation("com.fasterxml.jackson.core:jackson-databind")
+  implementation("tools.jackson.core:jackson-databind")
   implementation("org.slf4j:slf4j-api")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -34,8 +33,7 @@ dependencies {
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+  testImplementation("tools.jackson.module:jackson-module-kotlin")
 
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -99,9 +97,3 @@ spotless {
   }
 }
 
-detekt {
-  buildUponDefaultConfig = true
-  allRules = true
-  config.setFrom("$rootDir/detekt.yml")
-  baseline = file("$rootDir/detekt-baseline.xml")
-}

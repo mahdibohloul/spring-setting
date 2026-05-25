@@ -5,7 +5,7 @@ import io.github.mahdibohloul.spring.setting.admin.services.SettingAdminService
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
+import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.security.access.AccessDeniedException

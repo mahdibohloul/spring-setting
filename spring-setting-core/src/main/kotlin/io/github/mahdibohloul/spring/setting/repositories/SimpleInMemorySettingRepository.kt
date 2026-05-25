@@ -39,7 +39,7 @@ class SimpleInMemorySettingRepository :
     .switchIfEmpty(Mono.error(ClassCastException("Setting with key $name is not of type ${type.simpleName}")))
     .cast(type.java)
 
-  override fun <T : Setting> deleteByName(name: String, type: KClass<T>): Mono<Void> = Mono.fromRunnable<T?> {
+  override fun <T : Setting> deleteByName(name: String, type: KClass<T>): Mono<Void> = Mono.fromRunnable<Unit> {
     store.remove(name)
   }.then()
 

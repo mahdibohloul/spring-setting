@@ -1,7 +1,7 @@
 package io.github.mahdibohloul.spring.setting.writer
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.mahdibohloul.spring.setting.Setting
+import tools.jackson.databind.ObjectMapper
 
 class SettingWriterImpl(
   private val objectMapper: ObjectMapper,

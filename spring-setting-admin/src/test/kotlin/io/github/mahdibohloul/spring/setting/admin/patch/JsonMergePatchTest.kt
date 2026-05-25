@@ -1,7 +1,7 @@
 package io.github.mahdibohloul.spring.setting.admin.patch
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -105,6 +105,6 @@ class JsonMergePatchTest {
     val merged = JsonMergePatch.merge(target, patch)
 
     // verify
-    assertEquals("PT30S", merged.get("delay").get("maxAllowedDelay").asText())
+    assertEquals("PT30S", merged.get("delay").get("maxAllowedDelay").asString())
   }
 }

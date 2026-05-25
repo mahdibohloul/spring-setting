@@ -1,10 +1,9 @@
 plugins {
-  kotlin("jvm") version "1.9.23"
-  kotlin("plugin.spring") version "1.9.23"
-  id("io.spring.dependency-management") version "1.1.7"
+  kotlin("jvm")
+  kotlin("plugin.spring")
+  id("io.spring.dependency-management")
   id("com.vanniktech.maven.publish") version "0.34.0"
   id("com.diffplug.spotless") version "7.2.1"
-  id("io.gitlab.arturbosch.detekt") version "1.23.6"
   `java-library`
 }
 
@@ -23,8 +22,8 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-autoconfigure")
   implementation("org.springframework:spring-aop")
   implementation("org.aspectj:aspectjweaver")
-  implementation("com.fasterxml.jackson.core:jackson-databind")
-  implementation("box.tapsi.libs:utilities-starter:0.9.3")
+  implementation("tools.jackson.core:jackson-databind")
+  implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.2.4")
 
   compileOnly("org.slf4j:slf4j-api")
@@ -91,12 +90,5 @@ spotless {
     leadingTabsToSpaces()
     endWithNewline()
   }
-}
-
-detekt {
-  buildUponDefaultConfig = true
-  allRules = true
-  config.setFrom("$rootDir/detekt.yml")
-  baseline = file("$rootDir/detekt-baseline.xml")
 }
 
