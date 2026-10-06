@@ -20,7 +20,9 @@ import java.time.Instant
  * [io.github.mahdibohloul.spring.setting.admin.web.autoconfigure.SettingAdminWebAutoConfiguration].
  *
  * Endpoints:
- * - `GET  /settings/{type}/history?limit=20` — returns the [limit] most-recent audit entries.
+ * - `GET  /settings/{type}/history?limit=20&before=<cursor>` — returns one page of audit entries, newest
+ *   first. Without `before` it is the newest page. `nextCursor` is the `before` of the next (older) page,
+ *   and it is `null` on the last page. An unknown `before` is a 400.
  * - `POST /settings/{type}/revert/{entryId}` — restores the setting to the `previousValue`
  *   recorded in the given entry; returns the same payload shape as PATCH/PUT.
  */
@@ -32,8 +34,9 @@ class SettingAuditController(private val service: SettingAdminService) {
   fun history(
     @PathVariable type: String,
     @RequestParam(defaultValue = "20") limit: Int,
-  ): Mono<HistoryResponse> = service.getHistory(typeName = type, limit = limit)
-    .map { HistoryResponse(it.map(::toDto)) }
+    @RequestParam(required = false) before: String?,
+  ): Mono<HistoryResponse> = service.getHistory(typeName = type, limit = limit, before = before)
+    .map { page -> HistoryResponse(entries = page.entries.map(::toDto), nextCursor = page.nextCursor) }
 
   @PostMapping("/{type}/revert/{entryId}")
   fun revert(
@@ -44,7 +47,10 @@ class SettingAuditController(private val service: SettingAdminService) {
 
   // ── Response DTOs ─────────────────────────────────────────────────────────────
 
-  data class HistoryResponse(val entries: List<AuditEntryDto>)
+  data class HistoryResponse(
+    val entries: List<AuditEntryDto>,
+    val nextCursor: String? = null,
+  )
 
   data class AuditEntryDto(
     val id: String?,
