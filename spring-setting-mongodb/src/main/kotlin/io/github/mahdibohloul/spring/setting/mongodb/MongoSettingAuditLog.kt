@@ -1,8 +1,11 @@
 package io.github.mahdibohloul.spring.setting.mongodb
 
+import io.github.mahdibohloul.spring.setting.admin.InvalidHistoryCursorException
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditCursor
 import io.github.mahdibohloul.spring.setting.admin.audit.AuditEntry
 import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.authorization.SettingAdminAuthorizer
+import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
@@ -15,8 +18,8 @@ import java.time.Instant
  * MongoDB-backed implementation of [SettingAuditLog].
  *
  * All queries are performed against the collection name supplied at construction time
- * (driven by [MongoAuditProperties]). The `@Indexed` on [MongoAuditDocument.typeName] ensures
- * history lookups are efficient even in collections with many entries.
+ * (driven by [MongoAuditProperties]). The compound index on [MongoAuditDocument] (`typeName`,
+ * `changedAt` DESC, `_id` DESC) serves the history pages.
  *
  * **Retention** — [record] appends the new entry and then evicts the oldest entries that exceed
  * [maxEntriesPerType]. Eviction is best-effort: a failure is logged and does not surface to the
@@ -32,12 +35,26 @@ class MongoSettingAuditLog(
   override fun record(entry: AuditEntry): Mono<Void> = mongoTemplate.save(entry.toDocument(), collectionName)
     .then(evictOldEntries(entry.typeName))
 
-  override fun findByTypeName(typeName: String, limit: Int): Mono<List<AuditEntry>> {
-    val query = Query(Criteria.where("typeName").`is`(typeName))
-      .with(Sort.by(Sort.Direction.DESC, "changedAt"))
+  override fun findByTypeName(typeName: String, limit: Int): Mono<List<AuditEntry>> = findByTypeName(typeName, limit, before = null)
+
+  /**
+   * Keyset query in the order `changedAt` DESC, `_id` DESC. The `_id` tie-break keeps entries with the same
+   * `changedAt` in a fixed order. The cursor id is sent as an [ObjectId], so `$lt` compares ObjectIds.
+   */
+  override fun findByTypeName(typeName: String, limit: Int, before: AuditCursor?): Mono<List<AuditEntry>> = Mono.defer {
+    val criteria = Criteria.where("typeName").`is`(typeName)
+    if (before != null) {
+      if (!ObjectId.isValid(before.id)) throw InvalidHistoryCursorException(before.encode())
+      criteria.orOperator(
+        Criteria.where("changedAt").lt(before.changedAt),
+        Criteria.where("changedAt").`is`(before.changedAt).and("_id").lt(ObjectId(before.id)),
+      )
+    }
+    val query = Query(criteria)
+      .with(Sort.by(Sort.Order.desc("changedAt"), Sort.Order.desc("_id")))
       .limit(limit)
 
-    return mongoTemplate.find(query, MongoAuditDocument::class.java, collectionName)
+    mongoTemplate.find(query, MongoAuditDocument::class.java, collectionName)
       .map { it.toEntry() }
       .collectList()
   }
