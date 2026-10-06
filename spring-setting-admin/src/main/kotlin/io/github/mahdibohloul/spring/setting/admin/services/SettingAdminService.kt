@@ -1,6 +1,6 @@
 package io.github.mahdibohloul.spring.setting.admin.services
 
-import io.github.mahdibohloul.spring.setting.admin.audit.AuditEntry
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditHistoryPage
 import reactor.core.publisher.Mono
 
 /**
@@ -37,12 +37,16 @@ interface SettingAdminService {
   fun delete(typeName: String): Mono<Void>
 
   /**
-   * Returns the [limit] most-recent audit entries for [typeName], ordered newest-first.
+   * Returns one page of at most [limit] audit entries for [typeName], ordered newest-first.
    * [limit] is clamped to `[1, 200]`. Requires the `HISTORY` ACL operation to be permitted.
    *
-   * Returns an empty list when audit is disabled (no-op log) or when no entries exist yet.
+   * A `null` [before] returns the newest page. To read older entries, send the page's
+   * [AuditHistoryPage.nextCursor] as [before]; it is `null` on the last page. A [before] that is not
+   * such a cursor fails with [io.github.mahdibohloul.spring.setting.admin.InvalidHistoryCursorException].
+   *
+   * Returns an empty page when audit is disabled (no-op log) or when no entries exist yet.
    */
-  fun getHistory(typeName: String, limit: Int): Mono<List<AuditEntry>>
+  fun getHistory(typeName: String, limit: Int, before: String? = null): Mono<AuditHistoryPage>
 
   /**
    * Restores the setting identified by [typeName] to the `previousValue` recorded in [entryId].

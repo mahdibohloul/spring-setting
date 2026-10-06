@@ -1,6 +1,7 @@
 package io.github.mahdibohloul.spring.setting.admin.web.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.mahdibohloul.spring.setting.admin.InvalidHistoryCursorException
 import io.github.mahdibohloul.spring.setting.admin.UnknownSettingTypeException
 import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.HttpStatus
@@ -19,6 +20,7 @@ import reactor.core.publisher.Mono
  * - 401 for unauthenticated.
  * - 403 for authenticated-but-forbidden.
  * - 404 for unknown setting types.
+ * - 400 for a history `before` cursor that the API did not return.
  * - 400 for malformed JSON / patch payloads (delegated to default Spring handling).
  * - 500 for everything else, with the message preserved for non-prod debugging.
  */
@@ -31,6 +33,7 @@ class SettingAdminWebExceptionHandler(
       is AuthenticationException -> HttpStatus.UNAUTHORIZED to "unauthenticated"
       is AccessDeniedException -> HttpStatus.FORBIDDEN to "forbidden"
       is UnknownSettingTypeException -> HttpStatus.NOT_FOUND to "unknown-setting-type"
+      is InvalidHistoryCursorException -> HttpStatus.BAD_REQUEST to "invalid-cursor"
       is ResponseStatusException -> ex.statusCode.let {
         (HttpStatus.resolve(it.value()) ?: HttpStatus.INTERNAL_SERVER_ERROR) to "error"
       }
