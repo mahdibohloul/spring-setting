@@ -204,6 +204,8 @@ spring:
   setting:
     mongodb:
       collection-name: settings  # collection used to store settings — default: "settings"
+      initialize-collections: true  # create the settings/audit collections (and their indexes when
+                                    # spring.data.mongodb.auto-index-creation=true) at startup — default: true
 ```
 
 ---

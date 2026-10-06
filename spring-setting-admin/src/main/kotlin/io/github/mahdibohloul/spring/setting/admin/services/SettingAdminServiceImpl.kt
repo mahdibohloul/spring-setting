@@ -13,13 +13,16 @@ import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditPrincipalPr
 import io.github.mahdibohloul.spring.setting.admin.authorization.SettingAdminAuthorizer
 import io.github.mahdibohloul.spring.setting.admin.authorization.SettingAdminAuthorizer.Operation
 import io.github.mahdibohloul.spring.setting.admin.patch.JsonMergePatch
+import io.github.mahdibohloul.spring.setting.admin.transaction.SettingTransactionRetryPolicy
 import io.github.mahdibohloul.spring.setting.reader.SettingReader
 import io.github.mahdibohloul.spring.setting.repositories.SettingRepository
 import io.github.mahdibohloul.spring.setting.writer.SettingWriter
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.core.publisher.Mono
+import reactor.util.retry.Retry
 import tools.jackson.databind.ObjectMapper
+import java.time.Duration
 import java.time.Instant
 import kotlin.reflect.KClass
 
@@ -55,6 +58,11 @@ class SettingAdminServiceImpl(
    * the caller.
    */
   private val txOperator: TransactionalOperator? = null,
+  /**
+   * When non-null, a transaction that fails with an error this policy accepts runs again as a new
+   * transaction, up to [MAX_TRANSACTION_RETRIES] times. Used only together with [txOperator].
+   */
+  private val transactionRetryPolicy: SettingTransactionRetryPolicy? = null,
 ) : SettingAdminService {
   private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -206,12 +214,30 @@ class SettingAdminServiceImpl(
   /**
    * Wraps [this] in the [txOperator] transaction when one is configured.
    * A no-op pass-through when [txOperator] is null.
+   *
+   * Each retry subscribes again, so it starts a new transaction and reads the current setting again.
+   * When the retries run out, the caller gets the last error, not a retry-exhausted wrapper.
    */
-  private fun <T : Any> Mono<T>.inTransaction(): Mono<T> = txOperator?.transactional(this) ?: this
+  private fun <T : Any> Mono<T>.inTransaction(): Mono<T> {
+    val transactional = txOperator?.transactional(this) ?: return this
+    return transactionRetryPolicy?.let { retryPolicy -> transactional.retryWhen(transactionRetry(retryPolicy)) }
+      ?: transactional
+  }
+
+  private fun transactionRetry(retryPolicy: SettingTransactionRetryPolicy): Retry {
+    val backoff = Retry.backoff(MAX_TRANSACTION_RETRIES, TRANSACTION_RETRY_BACKOFF)
+    return backoff.filter(retryPolicy::isRetryable)
+      .doBeforeRetry { signal ->
+        logger.warn("Retrying the setting transaction (retry {})", signal.totalRetries() + 1, signal.failure())
+      }
+      .onRetryExhaustedThrow { _, signal -> signal.failure() }
+  }
 
   private companion object {
     const val MIN_HISTORY_LIMIT = 1
     const val MAX_HISTORY_LIMIT = 200
+    const val MAX_TRANSACTION_RETRIES = 3L
+    val TRANSACTION_RETRY_BACKOFF: Duration = Duration.ofMillis(50)
 
     /**
      * Persistence key — always derived via [SettingHelper.getSettingName] so the admin API
