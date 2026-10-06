@@ -6,18 +6,30 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.SettingHelper
+import io.github.mahdibohloul.spring.setting.admin.InvalidHistoryCursorException
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeDescriptor
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeRegistry
 import io.github.mahdibohloul.spring.setting.admin.UnknownSettingTypeException
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditCursor
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditEntry
+import io.github.mahdibohloul.spring.setting.admin.audit.NoopSettingAuditLog
+import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.authorization.AllowAllSettingAdminAuthorizer
 import io.github.mahdibohloul.spring.setting.admin.authorization.SettingAdminAuthorizer
 import io.github.mahdibohloul.spring.setting.reader.SettingReaderImpl
 import io.github.mahdibohloul.spring.setting.repositories.SimpleInMemorySettingRepository
 import io.github.mahdibohloul.spring.setting.writer.SettingWriterImpl
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 import java.time.Duration
+import java.time.Instant
 import kotlin.reflect.KClass
 
 class SettingAdminServiceImplTest {
@@ -40,6 +52,7 @@ class SettingAdminServiceImplTest {
 
   private fun newService(
     authorizer: SettingAdminAuthorizer = AllowAllSettingAdminAuthorizer(),
+    auditLog: SettingAuditLog = NoopSettingAuditLog(),
   ): Pair<SettingAdminServiceImpl, SimpleInMemorySettingRepository> {
     val repo = SimpleInMemorySettingRepository()
     val registry = SettingTypeRegistry(listOf(Descriptor(SampleSetting::class) { SampleSetting() }))
@@ -58,6 +71,7 @@ class SettingAdminServiceImplTest {
       authorizer = authorizer,
       settingWriter = settingWriter,
       settingReader = settingReader,
+      auditLog = auditLog,
     ) to repo
   }
 
@@ -210,5 +224,87 @@ class SettingAdminServiceImplTest {
     StepVerifier.create(service.getAsJson("DoesNotExist"))
       .expectError(UnknownSettingTypeException::class.java)
       .verify()
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────────
+
+  private fun auditEntry(id: String, changedAt: Instant) = AuditEntry(
+    id = id,
+    typeName = "SampleSetting",
+    operation = SettingAdminAuthorizer.Operation.PATCH,
+    previousValue = "{}",
+    newValue = "{}",
+    changedBy = "tester",
+    changedAt = changedAt,
+  )
+
+  @Test
+  fun `getHistory reads one entry more and returns the cursor of the last entry when an older page exists`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val (service, _) = newService(auditLog = auditLog)
+    val newest = auditEntry(id = "6720aa0000000000000000b2", changedAt = Instant.ofEpochMilli(2_000))
+    val last = auditEntry(id = "6720aa0000000000000000b1", changedAt = Instant.ofEpochMilli(1_000))
+    val lookahead = auditEntry(id = "6720aa0000000000000000b0", changedAt = Instant.ofEpochMilli(1_000))
+
+    // when
+    whenever(auditLog.findByTypeName("SampleSetting", 3, null)).thenReturn(Mono.just(listOf(newest, last, lookahead)))
+
+    // verify
+    StepVerifier.create(service.getHistory("SampleSetting", 2))
+      .assertNext { page ->
+        check(page.entries == listOf(newest, last))
+        check(page.nextCursor == AuditCursor(changedAt = last.changedAt, id = "6720aa0000000000000000b1").encode())
+      }
+      .verifyComplete()
+  }
+
+  @Test
+  fun `getHistory returns no cursor on the last page`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val (service, _) = newService(auditLog = auditLog)
+    val only = auditEntry(id = "6720aa0000000000000000b2", changedAt = Instant.ofEpochMilli(2_000))
+    val before = AuditCursor(changedAt = Instant.ofEpochMilli(3_000), id = "6720aa0000000000000000b3")
+
+    // when
+    whenever(auditLog.findByTypeName("SampleSetting", 3, before)).thenReturn(Mono.just(listOf(only)))
+
+    // verify
+    StepVerifier.create(service.getHistory("SampleSetting", 2, before.encode()))
+      .assertNext { page ->
+        check(page.entries == listOf(only))
+        check(page.nextCursor == null)
+      }
+      .verifyComplete()
+  }
+
+  @Test
+  fun `getHistory clamps the page size to two hundred and reads one entry more`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val (service, _) = newService(auditLog = auditLog)
+
+    // when
+    whenever(auditLog.findByTypeName(any(), any(), eq(null))).thenReturn(Mono.just(emptyList()))
+
+    // verify
+    StepVerifier.create(service.getHistory("SampleSetting", 5_000))
+      .assertNext { page -> check(page.entries.isEmpty() && page.nextCursor == null) }
+      .verifyComplete()
+    verify(auditLog).findByTypeName("SampleSetting", 201, null)
+  }
+
+  @Test
+  fun `getHistory rejects a cursor that the API did not return`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val (service, _) = newService(auditLog = auditLog)
+
+    // when / verify
+    StepVerifier.create(service.getHistory("SampleSetting", 20, "not-a-cursor"))
+      .expectError(InvalidHistoryCursorException::class.java)
+      .verify()
+    verify(auditLog, never()).findByTypeName(any(), any(), any())
   }
 }

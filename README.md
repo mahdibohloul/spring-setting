@@ -30,21 +30,21 @@ redeployment.
 ```kotlin
 dependencies {
   // Core library (required)
-  implementation("io.github.mahdibohloul:spring-setting-core:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-core:0.11.0")
 
   // Choose your storage backends
-  implementation("io.github.mahdibohloul:spring-setting-memory:0.11.1")
-  implementation("io.github.mahdibohloul:spring-setting-redis:0.11.1")
-  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-memory:0.11.0")
+  implementation("io.github.mahdibohloul:spring-setting-redis:0.11.0")
+  implementation("io.github.mahdibohloul:spring-setting-mongodb:0.11.0")
 
   // Optional: headless admin facade (list / read / patch / replace / delete)
-  implementation("io.github.mahdibohloul:spring-setting-admin:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-admin:0.11.0")
 
   // Optional: expose the admin facade over HTTP (requires spring-boot-starter-webflux)
-  implementation("io.github.mahdibohloul:spring-setting-admin-webflux:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-admin-webflux:0.11.0")
 
   // Optional: back the HTTP admin layer with Keycloak JWT auth
-  implementation("io.github.mahdibohloul:spring-setting-admin-keycloak:0.11.1")
+  implementation("io.github.mahdibohloul:spring-setting-admin-keycloak:0.11.0")
 
   // Optional: enable Bean Validation for settings
   implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -231,7 +231,7 @@ Both WebFlux and Spring Security must be provided by the consuming application.
 | `PATCH`  | `{basePath}/settings/{type}`               | RFC 7396 JSON Merge Patch                          |
 | `PUT`    | `{basePath}/settings/{type}`               | Full replace                                       |
 | `DELETE` | `{basePath}/settings/{type}`               | Reset to default                                   |
-| `GET`    | `{basePath}/settings/{type}/history`       | Audit history (newest-first, `?limit=20`)          |
+| `GET`    | `{basePath}/settings/{type}/history`       | Audit history (newest-first, `?limit=20&before=`)  |
 | `POST`   | `{basePath}/settings/{type}/revert/{id}`   | Revert to the `previousValue` of that audit entry  |
 | `GET`    | `{basePath}/features`                      | Feature catalogue for UI consumers                 |
 | `GET`    | `{basePath}/me`                            | Current caller's principal and roles               |
@@ -338,6 +338,22 @@ endpoints are not registered — existing behaviour is completely unchanged.
    audit-write are wrapped in a single atomic transaction. Both commit or both roll back.
    Without a transaction manager the audit write is best-effort.
 
+#### History paging
+
+`GET {basePath}/settings/{type}/history?limit=20&before=<cursor>` returns one page, newest first:
+
+```json
+{ "entries": [ { "id": "6720…", "typeName": "FooSetting", "operation": "PATCH", "…": "…" } ],
+  "nextCursor": "MTc1OTYwMDAwMDEyMzo2NzIw…" }
+```
+
+- `limit` is clamped to `[1, 200]` for each page.
+- Without `before` the response is the newest page.
+- To read older entries, send the `nextCursor` of the last page as `before`. `nextCursor` is `null` on the last page.
+- The cursor is opaque. Do not parse it or build it. An unknown cursor gives `400` with code `invalid-cursor`.
+- The order is `changedAt` DESC, then `id` DESC, so entries with the same `changedAt` are never skipped or
+  returned twice across pages.
+
 #### Revert
 
 `POST {basePath}/settings/{type}/revert/{entryId}` reads the `previousValue` from the named audit
@@ -370,6 +386,10 @@ fun customAuditLog(): SettingAuditLog = MyCustomAuditLog()
 
 The MongoDB implementation (`MongoSettingAuditLog`) is skipped when a `SettingAuditLog` bean is
 already present (`@ConditionalOnMissingBean`).
+
+To support history pages after the first one, also override
+`findByTypeName(typeName, limit, before: AuditCursor?)`. Its default body accepts only a `null` cursor and
+fails for any other value.
 
 ---
 

@@ -5,7 +5,9 @@ import io.github.mahdibohloul.spring.setting.Setting
 import io.github.mahdibohloul.spring.setting.SettingHelper
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeDescriptor
 import io.github.mahdibohloul.spring.setting.admin.SettingTypeRegistry
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditCursor
 import io.github.mahdibohloul.spring.setting.admin.audit.AuditEntry
+import io.github.mahdibohloul.spring.setting.admin.audit.AuditHistoryPage
 import io.github.mahdibohloul.spring.setting.admin.audit.NoopSettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditPrincipalProvider
@@ -125,10 +127,22 @@ class SettingAdminServiceImpl(
     },
   )
 
-  override fun getHistory(typeName: String, limit: Int): Mono<List<AuditEntry>> {
+  /**
+   * Reads one entry more than the page needs. When it exists, an older page exists too, and the cursor
+   * of the last returned entry is the next `before`.
+   */
+  override fun getHistory(typeName: String, limit: Int, before: String?): Mono<AuditHistoryPage> {
     val clamped = limit.coerceIn(MIN_HISTORY_LIMIT, MAX_HISTORY_LIMIT)
-    return authorizer.authorize(Operation.HISTORY, typeName)
-      .then(auditLog.findByTypeName(typeName, clamped))
+    return authorizer.authorize(Operation.HISTORY, typeName).then(
+      Mono.defer {
+        val cursor = before?.let(AuditCursor::decode)
+        auditLog.findByTypeName(typeName, clamped + 1, cursor).map { entries ->
+          val page = entries.take(clamped)
+          val nextCursor = if (entries.size > clamped) AuditCursor.of(page.last())?.encode() else null
+          AuditHistoryPage(entries = page, nextCursor = nextCursor)
+        }
+      },
+    )
   }
 
   @Suppress("detekt.ReturnCount")

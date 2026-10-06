@@ -26,6 +26,7 @@ dependencies {
   implementation("io.projectreactor:reactor-core")
   implementation("com.fasterxml.jackson.core:jackson-databind")
 
+  testImplementation(project(":spring-setting-admin"))
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   testImplementation("io.projectreactor:reactor-test")

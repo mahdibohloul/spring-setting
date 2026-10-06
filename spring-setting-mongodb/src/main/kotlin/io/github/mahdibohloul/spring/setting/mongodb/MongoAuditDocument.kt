@@ -2,6 +2,7 @@ package io.github.mahdibohloul.spring.setting.mongodb
 
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
@@ -12,7 +13,11 @@ import java.time.Instant
  * The collection name is driven by [MongoAuditProperties] and defaults to `setting_audit_log`.
  * `changedAt` is populated by Spring Data's `@CreatedDate` auditing on first save — this field
  * is intentionally immutable (no `@LastModifiedDate`) because audit records must never change.
+ *
+ * The compound index serves the history pages: equality on `typeName`, then the keyset order
+ * `changedAt` DESC, `_id` DESC.
  */
+@CompoundIndex(name = "idx_type_name_changed_at_id", def = "{ 'typeName': 1, 'changedAt': -1, '_id': -1 }")
 @Document(
   collection =
   "#{@environment.getProperty('spring.setting.audit.mongodb.collection-name', 'setting_audit_logs')}",
