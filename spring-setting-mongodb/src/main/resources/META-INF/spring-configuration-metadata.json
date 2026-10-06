@@ -25,6 +25,13 @@
       "defaultValue": "settings"
     },
     {
+      "name": "spring.setting.mongodb.initialize-collections",
+      "type": "java.lang.Boolean",
+      "sourceType": "io.github.mahdibohloul.spring.setting.mongodb.MongoSettingProperties",
+      "description": "Creates the settings and audit collections at startup, together with their indexes when spring.data.mongodb.auto-index-creation=true. This prevents a WriteConflict on the first admin transaction on a new database.",
+      "defaultValue": true
+    },
+    {
       "name": "spring.setting.audit.enabled",
       "type": "java.lang.Boolean",
       "description": "Enables the audit log. When true, every PATCH, PUT, and DELETE is recorded with the previous value, new value, caller identity, and timestamp. History and revert endpoints become available. Requires spring-setting-admin on the classpath.",

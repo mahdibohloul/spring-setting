@@ -37,6 +37,7 @@ dependencies {
   compileOnly("org.slf4j:slf4j-api")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.springframework:spring-tx")
   testImplementation("org.springframework.security:spring-security-test")
   // spring-boot-starter-webflux and spring-boot-starter-security are now api deps —
   // they are visible to test sources automatically; no re-declaration needed.
