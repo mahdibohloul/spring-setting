@@ -46,6 +46,23 @@ class MongoAuditAutoConfiguration {
     props: MongoAuditProperties,
   ): SettingAuditLog = MongoSettingAuditLog(mongoTemplate, props.collectionName, props.maxEntriesPerType)
 
+  /** Creates the audit collection and its indexes at startup. See [MongoCollectionInitializer]. */
+  @Bean
+  @ConditionalOnProperty(
+    prefix = "spring.setting.mongodb",
+    name = ["initialize-collections"],
+    havingValue = "true",
+    matchIfMissing = true,
+  )
+  fun mongoAuditCollectionInitializer(
+    mongoTemplate: ReactiveMongoTemplate,
+    props: MongoAuditProperties,
+  ): MongoCollectionInitializer = MongoCollectionInitializer(
+    mongoTemplate = mongoTemplate,
+    collectionName = props.collectionName,
+    entityClass = MongoAuditDocument::class.java,
+  )
+
   /**
    * Creates a [TransactionalOperator] backed by the MongoDB reactive transaction manager.
    *
