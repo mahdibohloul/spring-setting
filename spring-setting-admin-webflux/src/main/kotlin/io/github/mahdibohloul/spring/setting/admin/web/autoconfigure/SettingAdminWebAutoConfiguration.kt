@@ -8,6 +8,7 @@ import io.github.mahdibohloul.spring.setting.admin.authorization.SettingAdminAut
 import io.github.mahdibohloul.spring.setting.admin.autoconfigure.SettingAdminAutoConfiguration
 import io.github.mahdibohloul.spring.setting.admin.services.SettingAdminService
 import io.github.mahdibohloul.spring.setting.admin.services.SettingAdminServiceImpl
+import io.github.mahdibohloul.spring.setting.admin.transaction.SettingTransactionRetryPolicy
 import io.github.mahdibohloul.spring.setting.admin.web.SettingAdminWebProperties
 import io.github.mahdibohloul.spring.setting.admin.web.acl.RoleBasedSettingAdminAuthorizer
 import io.github.mahdibohloul.spring.setting.admin.web.acl.SettingAdminAclProperties
@@ -108,6 +109,7 @@ class SettingAdminWebAutoConfiguration {
     auditLog: ObjectProvider<SettingAuditLog>,
     principalProvider: SettingAuditPrincipalProvider,
     txOperator: ObjectProvider<TransactionalOperator>,
+    transactionRetryPolicy: ObjectProvider<SettingTransactionRetryPolicy>,
   ): SettingAdminService = SettingAdminServiceImpl(
     registry = registry,
     settingRepository = settingRepository,
@@ -118,6 +120,7 @@ class SettingAdminWebAutoConfiguration {
     auditLog = auditLog.getIfAvailable(::NoopSettingAuditLog),
     principalProvider = principalProvider,
     txOperator = txOperator.ifAvailable,
+    transactionRetryPolicy = transactionRetryPolicy.ifAvailable,
   )
 
   @Bean

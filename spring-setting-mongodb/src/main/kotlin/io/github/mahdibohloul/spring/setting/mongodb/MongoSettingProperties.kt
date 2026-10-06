@@ -5,4 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties("spring.setting.mongodb")
 data class MongoSettingProperties(
   val collectionName: String = "settings",
+  /**
+   * Creates the settings and audit collections at startup, together with their indexes when
+   * `spring.data.mongodb.auto-index-creation=true`. See [MongoCollectionInitializer].
+   */
+  val initializeCollections: Boolean = true,
 )

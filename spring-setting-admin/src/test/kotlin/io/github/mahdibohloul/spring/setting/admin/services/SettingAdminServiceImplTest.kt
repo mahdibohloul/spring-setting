@@ -12,6 +12,7 @@ import io.github.mahdibohloul.spring.setting.admin.audit.NoopSettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.audit.SettingAuditLog
 import io.github.mahdibohloul.spring.setting.admin.authorization.AllowAllSettingAdminAuthorizer
 import io.github.mahdibohloul.spring.setting.admin.authorization.SettingAdminAuthorizer
+import io.github.mahdibohloul.spring.setting.admin.transaction.SettingTransactionRetryPolicy
 import io.github.mahdibohloul.spring.setting.reader.SettingReaderImpl
 import io.github.mahdibohloul.spring.setting.repositories.SimpleInMemorySettingRepository
 import io.github.mahdibohloul.spring.setting.writer.SettingWriterImpl
@@ -20,8 +21,10 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 import tools.jackson.databind.json.JsonMapper
@@ -51,6 +54,8 @@ class SettingAdminServiceImplTest {
   private fun newService(
     authorizer: SettingAdminAuthorizer = AllowAllSettingAdminAuthorizer(),
     auditLog: SettingAuditLog = NoopSettingAuditLog(),
+    txOperator: TransactionalOperator? = null,
+    transactionRetryPolicy: SettingTransactionRetryPolicy? = null,
   ): Pair<SettingAdminServiceImpl, SimpleInMemorySettingRepository> {
     val repo = SimpleInMemorySettingRepository()
     val registry = SettingTypeRegistry(listOf(Descriptor(SampleSetting::class) { SampleSetting() }))
@@ -68,6 +73,8 @@ class SettingAdminServiceImplTest {
       settingWriter = settingWriter,
       settingReader = settingReader,
       auditLog = auditLog,
+      txOperator = txOperator,
+      transactionRetryPolicy = transactionRetryPolicy,
     ) to repo
   }
 
@@ -303,4 +310,74 @@ class SettingAdminServiceImplTest {
       .verify()
     verify(auditLog, never()).findByTypeName(any(), any(), any())
   }
+
+  @Test
+  fun `patch runs a new transaction when the retry policy accepts the error`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val txOperator = mock<TransactionalOperator>()
+    val (service, repo) = newService(
+      auditLog = auditLog,
+      txOperator = txOperator,
+      transactionRetryPolicy = SettingTransactionRetryPolicy { error -> error is TransientError },
+    )
+
+    // when
+    whenever(txOperator.transactional(any<Mono<Any>>())).thenAnswer { invocation -> invocation.getArgument(0) }
+    whenever(auditLog.record(any())).thenReturn(Mono.error(TransientError()), Mono.empty())
+
+    // verify
+    StepVerifier.create(service.patch("SampleSetting", """{"label":"patched"}"""))
+      .assertNext { json -> check(json.contains("\"label\":\"patched\"")) }
+      .verifyComplete()
+    verify(auditLog, times(2)).record(any())
+    val persisted = repo.findByName(SettingHelper.getSettingName(SampleSetting::class), SampleSetting::class).block()!!
+    check(persisted.label == "patched")
+  }
+
+  @Test
+  fun `patch does not run the transaction again when the retry policy rejects the error`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val txOperator = mock<TransactionalOperator>()
+    val (service, _) = newService(
+      auditLog = auditLog,
+      txOperator = txOperator,
+      transactionRetryPolicy = SettingTransactionRetryPolicy { error -> error is TransientError },
+    )
+
+    // when
+    whenever(txOperator.transactional(any<Mono<Any>>())).thenAnswer { invocation -> invocation.getArgument(0) }
+    whenever(auditLog.record(any())).thenReturn(Mono.error(IllegalStateException("audit down")))
+
+    // verify
+    StepVerifier.create(service.patch("SampleSetting", """{"label":"patched"}"""))
+      .expectErrorMessage("audit down")
+      .verify()
+    verify(auditLog, times(1)).record(any())
+  }
+
+  @Test
+  fun `patch fails with the last error when the transaction retries run out`() {
+    // given
+    val auditLog = mock<SettingAuditLog>()
+    val txOperator = mock<TransactionalOperator>()
+    val (service, _) = newService(
+      auditLog = auditLog,
+      txOperator = txOperator,
+      transactionRetryPolicy = SettingTransactionRetryPolicy { error -> error is TransientError },
+    )
+
+    // when
+    whenever(txOperator.transactional(any<Mono<Any>>())).thenAnswer { invocation -> invocation.getArgument(0) }
+    whenever(auditLog.record(any())).thenReturn(Mono.error(TransientError()))
+
+    // verify
+    StepVerifier.create(service.patch("SampleSetting", """{"label":"patched"}"""))
+      .expectError(TransientError::class.java)
+      .verify()
+    verify(auditLog, times(4)).record(any())
+  }
+
+  private class TransientError : RuntimeException("transient")
 }
